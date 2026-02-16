@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "locked_villager_trades",
+	"version": "${version}",
+	"name": "locked_villager_trades",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/locked_villager_trades/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"locked_villager_trades.Locked_villager_trades"
+		],
+		"client": [
+			"locked_villager_trades.Locked_villager_tradesClient"
+		]
+	},
+	"mixins": [
+		"locked_villager_trades.mixins.json",
+		{
+			"config": "locked_villager_trades.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.10",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
