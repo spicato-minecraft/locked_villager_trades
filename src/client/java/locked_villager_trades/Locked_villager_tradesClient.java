@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 public class Locked_villager_tradesClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
+		// Payload registration is done in common Locked_villager_trades.onInitialize()
+		// which runs for both client and server; no duplicate registration needed.
 	}
 }

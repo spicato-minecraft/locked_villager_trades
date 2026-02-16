@@ -1,15 +1,1 @@
-{
-	"required": true,
-	"package": "locked_villager_trades.mixin",
-	"compatibilityLevel": "JAVA_21",
-	"mixins": [
-		"VillagerTradesMixin",
-		"VillagerPersistMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
-	}
-}
+{"required":true,"package":"locked_villager_trades.mixin","compatibilityLevel":"JAVA_21","mixins":["VillagerTradesMixin","VillagerPersistMixin","VillagerTradeLockMixin","MerchantMenuMixin","MerchantMenuAccessorMixin","VillagerAccessorMixin","AbstractContainerMenuAccessorMixin"],"injectors":{"defaultRequire":1},"overwrites":{"requireAnnotations":true}}

@@ -1,11 +1,1 @@
-{
-	"required": true,
-	"package": "locked_villager_trades.mixin.client",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"ExampleClientMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	}
-}
+{"required":true,"package":"locked_villager_trades.mixin.client","compatibilityLevel":"JAVA_21","client":["MerchantScreenMixin","MerchantScreenRenderMixin","ScreenAccessorMixin"],"injectors":{"defaultRequire":1}}
