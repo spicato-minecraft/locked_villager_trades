@@ -3,7 +3,7 @@
 	"id": "locked_villager_trades",
 	"version": "${version}",
 	"name": "locked_villager_trades",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Locks villager trades to the first trade that appears for each profession. Break and replace workstations or switch professions—trades stay the same.",
 	"authors": [
 		"Me!"
 	],

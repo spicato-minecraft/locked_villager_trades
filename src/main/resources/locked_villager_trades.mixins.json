@@ -3,7 +3,8 @@
 	"package": "locked_villager_trades.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"VillagerTradesMixin",
+		"VillagerPersistMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
