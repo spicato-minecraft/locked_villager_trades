@@ -27,7 +27,7 @@ public abstract class VillagerPersistMixin implements LockedTradesAccessor {
     private Map<VillagerProfession, LockedTradeData> locked_villager_trades$lockedTrades = new HashMap<>();
 
     @Unique
-    private boolean locked_villager_trades$generatingSecondSet = false;
+    private int locked_villager_trades$generatingSetIndex = 0;
 
     @Override
     public Map<VillagerProfession, LockedTradeData> locked_villager_trades$getLockedTrades() {
@@ -42,9 +42,10 @@ public abstract class VillagerPersistMixin implements LockedTradesAccessor {
     @Override
     public void locked_villager_trades$setSelectedTradeSetIndex(VillagerProfession profession, int index) {
         LockedTradeData data = locked_villager_trades$lockedTrades.get(profession);
-        if (data != null) {
+        if (data != null && data.tradeSets() != null && !data.tradeSets().isEmpty()) {
+            int maxIndex = data.tradeSets().size() - 1;
             locked_villager_trades$lockedTrades.put(profession,
-                    new LockedTradeData(data.tradeSets(), Math.max(0, Math.min(index, 1)), data.locked(), data.lockedLevel()));
+                    new LockedTradeData(data.tradeSets(), Math.max(0, Math.min(index, maxIndex)), data.locked(), data.lockedLevel()));
         }
     }
 
@@ -67,13 +68,13 @@ public abstract class VillagerPersistMixin implements LockedTradesAccessor {
     }
 
     @Override
-    public boolean locked_villager_trades$isGeneratingSecondSet() {
-        return locked_villager_trades$generatingSecondSet;
+    public int locked_villager_trades$getGeneratingSetIndex() {
+        return locked_villager_trades$generatingSetIndex;
     }
 
     @Override
-    public void locked_villager_trades$setGeneratingSecondSet(boolean value) {
-        this.locked_villager_trades$generatingSecondSet = value;
+    public void locked_villager_trades$setGeneratingSetIndex(int value) {
+        this.locked_villager_trades$generatingSetIndex = value;
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))

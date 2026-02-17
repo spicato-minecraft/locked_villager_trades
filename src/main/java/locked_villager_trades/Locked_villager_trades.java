@@ -1,5 +1,6 @@
 package locked_villager_trades;
 
+import locked_villager_trades.config.ModConfig;
 import locked_villager_trades.networking.SelectTradeSetPayload;
 import locked_villager_trades.util.LockedTradesStorage;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -16,8 +17,12 @@ public class Locked_villager_trades implements ModInitializer {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	public static ModConfig CONFIG;
+
 	@Override
 	public void onInitialize() {
+		CONFIG = ModConfig.load();
+
 		PayloadTypeRegistry.playC2S().register(SelectTradeSetPayload.TYPE, SelectTradeSetPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SelectTradeSetPayload.TYPE, (payload, context) -> {
@@ -39,7 +44,8 @@ public class Locked_villager_trades implements ModInitializer {
 				if (data == null || data.locked() || data.tradeSets() == null || data.tradeSets().size() < 2) {
 					return;
 				}
-				int index = Math.max(0, Math.min(payload.setIndex(), 1));
+				int maxIndex = data.tradeSets().size() - 1;
+				int index = Math.max(0, Math.min(payload.setIndex(), maxIndex));
 				accessor.locked_villager_trades$setSelectedTradeSetIndex(profession, index);
 				MerchantOffers selected = accessor.locked_villager_trades$getLockedTrades().get(profession).getSelectedOffers();
 				if (selected != null && !selected.isEmpty()) {

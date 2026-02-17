@@ -26,4 +26,10 @@ public interface LockedTradesMenuAccessor {
      * (villager has 2+ trade sets managed by this mod).
      */
     boolean locked_villager_trades$shouldHideExperienceBar();
+
+    /**
+     * Returns the max trade set index (tradeSets.size() - 1) for clamping selection.
+     * Returns -1 if not applicable.
+     */
+    int locked_villager_trades$getMaxTradeSetIndex();
 }

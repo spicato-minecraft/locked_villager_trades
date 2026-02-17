@@ -24,7 +24,7 @@ public interface LockedTradesAccessor {
     void locked_villager_trades$setLockedTrades(Map<VillagerProfession, LockedTradeData> trades);
 
     /**
-     * Gets the selected trade set index (0 or 1) for the given profession.
+     * Gets the selected trade set index (0 to tradeSets.size()-1) for the given profession.
      */
     default int locked_villager_trades$getSelectedTradeSetIndex(VillagerProfession profession) {
         LockedTradeData data = locked_villager_trades$getLockedTrades().get(profession);
@@ -32,7 +32,8 @@ public interface LockedTradesAccessor {
     }
 
     /**
-     * Sets the selected trade set index (0 or 1) for the given profession.
+     * Sets the selected trade set index for the given profession.
+     * Clamped to 0..tradeSets.size()-1.
      */
     void locked_villager_trades$setSelectedTradeSetIndex(VillagerProfession profession, int index);
 
@@ -63,12 +64,12 @@ public interface LockedTradesAccessor {
     void locked_villager_trades$setLockedLevel(VillagerProfession profession, int level);
 
     /**
-     * Returns true when generating the second trade set (to avoid infinite recursion).
+     * Returns the current generating set index (0 = not generating, >0 = generating Nth set).
      */
-    boolean locked_villager_trades$isGeneratingSecondSet();
+    int locked_villager_trades$getGeneratingSetIndex();
 
     /**
-     * Sets the generating-second-set flag.
+     * Sets the generating set index.
      */
-    void locked_villager_trades$setGeneratingSecondSet(boolean value);
+    void locked_villager_trades$setGeneratingSetIndex(int value);
 }

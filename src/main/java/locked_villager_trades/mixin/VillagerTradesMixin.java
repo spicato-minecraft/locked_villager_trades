@@ -1,8 +1,10 @@
 package locked_villager_trades.mixin;
 
+import locked_villager_trades.Locked_villager_trades;
 import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
+import locked_villager_trades.util.ProfessionMaxHelper;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerData;
@@ -19,7 +21,7 @@ import java.util.Map;
 /**
  * Intercepts Villager.updateTrades() to lock trades per profession.
  * When a villager has locked trades for their current profession, restores them instead of regenerating.
- * When first acquiring a profession, generates 2 trade set options for the player to choose from.
+ * When first acquiring a profession, generates N trade set options (from config, capped by profession).
  * On level-up (currentLevel > lockedLevel), lets vanilla run and updates stored trades.
  */
 @Mixin(Villager.class)
@@ -47,20 +49,26 @@ public abstract class VillagerTradesMixin {
             return;
         }
 
-        // If generating second set, let vanilla run (handled in TAIL)
-        if (accessor.locked_villager_trades$isGeneratingSecondSet()) {
+        // If generating additional sets, let vanilla run (handled in TAIL)
+        if (accessor.locked_villager_trades$getGeneratingSetIndex() > 0) {
             return;
         }
 
         int currentLevel = data.level();
-        boolean hasTwoSets = tradeData.tradeSets().size() >= 2;
+        boolean hasMultipleSets = tradeData.tradeSets().size() >= 2;
 
-        if (hasTwoSets) {
+        if (hasMultipleSets) {
             if (tradeData.locked()) {
                 // Level-up: let vanilla run so new level trades are added
                 if (currentLevel > tradeData.lockedLevel()) {
                     return;
                 }
+            }
+            // Not locked yet and fewer sets than config: clear and let vanilla run so TAIL can regenerate
+            int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
+            if (!tradeData.locked() && tradeData.tradeSets().size() < N) {
+                lockedTrades.remove(profession);
+                return; // Let vanilla run, TAIL will do first-time init
             }
             // Restore selected trade set (use copy so restock/use don't affect stored data)
             MerchantOffers selected = tradeData.getSelectedOffers();
@@ -93,17 +101,28 @@ public abstract class VillagerTradesMixin {
         MerchantOffers currentOffers = self.getOffers();
         int currentLevel = data.level();
 
-        if (accessor.locked_villager_trades$isGeneratingSecondSet()) {
-            // Second pass: save set 1, store both, restore set 0 as default, clear flag
-            if (existingData != null && existingData.tradeSets().size() == 1 && currentOffers != null && !currentOffers.isEmpty()) {
-                List<MerchantOffers> bothSets = new ArrayList<>(existingData.tradeSets());
-                bothSets.add(LockedTradesStorage.copyOffers(currentOffers));
-                LockedTradeData newData = new LockedTradeData(bothSets, 0, false, 0);
-                lockedTrades.put(profession, newData);
-                // Restore first set as default display (selectedIndex=0)
-                self.setOffers(LockedTradesStorage.copyOffers(newData.getSelectedOffers()));
+        int generatingIndex = accessor.locked_villager_trades$getGeneratingSetIndex();
+        if (generatingIndex > 0) {
+            // Mid-generation: add vanilla's result as next set
+            if (existingData != null && existingData.tradeSets().size() == generatingIndex && currentOffers != null && !currentOffers.isEmpty()) {
+                int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
+                List<MerchantOffers> allSets = new ArrayList<>(existingData.tradeSets());
+                allSets.add(LockedTradesStorage.copyOffers(currentOffers));
+
+                if (allSets.size() >= N) {
+                    // Done: store all sets, restore set 0, clear flag
+                    LockedTradeData newData = new LockedTradeData(allSets, 0, false, 0);
+                    lockedTrades.put(profession, newData);
+                    self.setOffers(LockedTradesStorage.copyOffers(newData.getSelectedOffers()));
+                    accessor.locked_villager_trades$setGeneratingSetIndex(0);
+                } else {
+                    // Continue: store progress, generate next set
+                    lockedTrades.put(profession, new LockedTradeData(allSets, 0, false, 0));
+                    accessor.locked_villager_trades$setGeneratingSetIndex(allSets.size());
+                    self.setOffers(new MerchantOffers());
+                    ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
+                }
             }
-            accessor.locked_villager_trades$setGeneratingSecondSet(false);
             return;
         }
 
@@ -120,17 +139,24 @@ public abstract class VillagerTradesMixin {
             return;
         }
 
-        // No locked trades: first time - generate 2 sets
+        // No locked trades: first time - generate N sets
         if (currentOffers == null || currentOffers.isEmpty()) {
             return;
         }
 
-        // First pass: save set 0, set flag, recursively call updateTrades
+        int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
         List<MerchantOffers> firstSet = new ArrayList<>();
         firstSet.add(LockedTradesStorage.copyOffers(currentOffers));
         lockedTrades.put(profession, new LockedTradeData(firstSet, 0, false, 0));
-        accessor.locked_villager_trades$setGeneratingSecondSet(true);
-        self.setOffers(new MerchantOffers()); // Clear so vanilla regenerates
-        ((locked_villager_trades.mixin.VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
+
+        if (N <= 1) {
+            // Single set: done, no selector needed
+            return;
+        }
+
+        // Generate remaining sets
+        accessor.locked_villager_trades$setGeneratingSetIndex(1);
+        self.setOffers(new MerchantOffers());
+        ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
     }
 }

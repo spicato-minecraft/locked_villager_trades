@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Adds synced data slots for trade set selection (selectedIndex, tradeSetLocked)
- * when the merchant is a Villager with 2 trade set options.
+ * when the merchant is a Villager with 2+ trade set options.
  */
 @Mixin(MerchantMenu.class)
 public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
@@ -30,7 +30,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
     private Merchant trader;
 
     @Unique
-    private static final int LOCKED_TRADES_COUNT = 2;
+    private static final int CONTAINER_DATA_SLOTS = 3; // selectedIndex, locked, maxTradeSetIndex
 
     @Unique
     private int[] locked_villager_trades$placeholderData = null;
@@ -47,16 +47,19 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                     lockedTradesData = new ContainerData() {
                 @Override
                 public int get(int index) {
-                    if (index == 0) {
-                        return accessor.locked_villager_trades$getSelectedTradeSetIndex(profession);
-                    }
-                    return accessor.locked_villager_trades$isTradeSetLocked(profession) ? 1 : 0;
+                    return switch (index) {
+                        case 0 -> accessor.locked_villager_trades$getSelectedTradeSetIndex(profession);
+                        case 1 -> accessor.locked_villager_trades$isTradeSetLocked(profession) ? 1 : 0;
+                        case 2 -> data.tradeSets().size() - 1; // maxTradeSetIndex, synced to client
+                        default -> 0;
+                    };
                 }
 
                 @Override
                 public void set(int index, int value) {
                     if (index == 0) {
-                        accessor.locked_villager_trades$setSelectedTradeSetIndex(profession, Math.max(0, Math.min(value, 1)));
+                        int maxIndex = data.tradeSets().size() - 1;
+                        accessor.locked_villager_trades$setSelectedTradeSetIndex(profession, Math.max(0, Math.min(value, maxIndex)));
                         MerchantOffers selected = accessor.locked_villager_trades$getLockedTrades().get(profession).getSelectedOffers();
                         if (selected != null && !selected.isEmpty()) {
                             villager.setOffers(LockedTradesStorage.copyOffers(selected));
@@ -69,11 +72,12 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                     } else if (index == 1) {
                         accessor.locked_villager_trades$setTradeSetLocked(profession, value != 0);
                     }
+                    // index 2 is read-only (maxTradeSetIndex from server)
                 }
 
                 @Override
                 public int getCount() {
-                    return LOCKED_TRADES_COUNT;
+                    return CONTAINER_DATA_SLOTS;
                 }
             };
                     ((locked_villager_trades.mixin.AbstractContainerMenuAccessorMixin) this).locked_villager_trades$invokeAddDataSlots(lockedTradesData);
@@ -82,22 +86,25 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
             }
         }
         // Client or non-Villager or Villager without 2 sets: use placeholder for sync consistency
-        locked_villager_trades$placeholderData = new int[]{0, 0};
+        // Placeholder receives synced values from server (selectedIndex, locked, maxTradeSetIndex)
+        locked_villager_trades$placeholderData = new int[]{0, 0, 1}; // default maxIndex=1 until server sync
         final int[] placeholder = locked_villager_trades$placeholderData;
         lockedTradesData = new ContainerData() {
                 @Override
                 public int get(int index) {
-                    return placeholder[index];
+                    return index < placeholder.length ? placeholder[index] : 0;
                 }
 
                 @Override
                 public void set(int index, int value) {
-                    placeholder[index] = value;
+                    if (index < placeholder.length) {
+                        placeholder[index] = value;
+                    }
                 }
 
                 @Override
                 public int getCount() {
-                    return LOCKED_TRADES_COUNT;
+                    return CONTAINER_DATA_SLOTS;
                 }
             };
         ((locked_villager_trades.mixin.AbstractContainerMenuAccessorMixin) this).locked_villager_trades$invokeAddDataSlots(lockedTradesData);
@@ -108,6 +115,15 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         if (locked_villager_trades$placeholderData != null) {
             return locked_villager_trades$placeholderData[0];
         }
+        if (trader instanceof Villager villager) {
+            VillagerProfession profession = villager.getVillagerData().profession().value();
+            if (!profession.equals(VillagerProfession.NONE)) {
+                LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
+                if (data != null) {
+                    return data.selectedIndex();
+                }
+            }
+        }
         return -1;
     }
 
@@ -116,12 +132,48 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         if (locked_villager_trades$placeholderData != null) {
             return locked_villager_trades$placeholderData[1] != 0;
         }
+        if (trader instanceof Villager villager) {
+            VillagerProfession profession = villager.getVillagerData().profession().value();
+            if (!profession.equals(VillagerProfession.NONE)) {
+                return ((LockedTradesAccessor) villager).locked_villager_trades$isTradeSetLocked(profession);
+            }
+        }
         return true;
     }
 
     @Override
     public boolean locked_villager_trades$canSelectTradeSet() {
-        return locked_villager_trades$placeholderData != null && locked_villager_trades$placeholderData[1] == 0;
+        if (locked_villager_trades$placeholderData != null) {
+            return locked_villager_trades$placeholderData[1] == 0;
+        }
+        if (trader instanceof Villager villager) {
+            VillagerProfession profession = villager.getVillagerData().profession().value();
+            if (!profession.equals(VillagerProfession.NONE)) {
+                LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
+                return data != null && data.tradeSets() != null && data.tradeSets().size() >= 2 && !data.locked();
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int locked_villager_trades$getMaxTradeSetIndex() {
+        if (locked_villager_trades$placeholderData != null && locked_villager_trades$placeholderData.length > 2) {
+            return locked_villager_trades$placeholderData[2]; // Synced from server
+        }
+        if (locked_villager_trades$placeholderData != null) {
+            return 1; // Legacy 2-slot placeholder
+        }
+        if (trader instanceof Villager villager) {
+            VillagerProfession profession = villager.getVillagerData().profession().value();
+            if (!profession.equals(VillagerProfession.NONE)) {
+                LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
+                if (data != null && data.tradeSets() != null && !data.tradeSets().isEmpty()) {
+                    return data.tradeSets().size() - 1;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override
