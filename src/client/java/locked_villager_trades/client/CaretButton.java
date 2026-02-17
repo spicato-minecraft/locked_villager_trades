@@ -7,7 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MerchantMenu;
 
 /**
- * A caret button that hides when at the boundary (left caret at index 0, right caret at max index).
+ * A caret button that hides when at the boundary (left caret at index 0, right caret at max index)
+ * or when the trade set is locked (player completed a trade).
  */
 public class CaretButton extends Button {
 
@@ -31,6 +32,10 @@ public class CaretButton extends Button {
      */
     public void updateVisibility() {
         if (menu instanceof LockedTradesMenuAccessor accessor) {
+            if (accessor.locked_villager_trades$isTradeSetLocked()) {
+                this.visible = false;
+                return;
+            }
             int index = accessor.locked_villager_trades$getSelectedTradeSetIndex();
             int maxIndex = accessor.locked_villager_trades$getMaxTradeSetIndex();
             if (isLeft) {
