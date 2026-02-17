@@ -75,7 +75,7 @@ These mixins are registered in `locked_villager_trades.client.mixins.json` and o
 
 The mod **does not modify** the vanilla trade graph (the registry of trade offer factories per profession/level). It only controls *when* vanilla generates trades and *what* is displayed:
 
-- **Trade generation:** Vanilla `Villager.updateTrades()` uses the built-in trade graph to produce `MerchantOffers`. The mod calls this method repeatedly (via `VillagerAccessorMixin.invokeUpdateTrades`) to generate N distinct trade sets; each call yields a new random set from the same graph.
+- **Trade generation:** Vanilla `Villager.updateTrades()` uses the built-in trade graph to produce `MerchantOffers`. The mod calls this method repeatedly (via `VillagerAccessorMixin.invokeUpdateTrades`) to generate N distinct trade sets; each call yields a new random set from the same graph. Duplicate sets (same items and counts per offer) are filtered out per profession before being added to the list.
 - **Display:** The UI reads `selectedIndex` and `locked` from `MerchantMenu` (synced via `ContainerData`). The actual offers shown in the trade slots come from `Villager.getOffers()` – the server swaps these when the player clicks `<`/`>` or when the menu syncs.
 - **No graph changes:** The mod never adds, removes, or alters trade offer factories. It only stores and restores `MerchantOffers` instances that vanilla generated.
 
@@ -162,8 +162,13 @@ flowchart TD
     E -->|No| F[Done]
     E -->|Yes| G[set generatingSetIndex=1, clear, invoke updateTrades]
     G --> H[Vanilla generates next set]
-    H --> I[TAIL: add set, generatingSetIndex++]
-    I --> J{allSets.size >= N?}
+    H --> I{Is new set duplicate of existing?}
+    I -->|Yes| I1{Retries limit exceeded?}
+    I1 -->|No| G
+    I1 -->|Yes| I2[Add anyway to avoid infinite loop]
+    I -->|No| I3[Add set, reset retries]
+    I2 --> J{allSets.size >= N?}
+    I3 --> J
     J -->|Yes| K[Restore set 0, clear flag]
     J -->|No| G
     B -->|Yes, 2+ sets, locked| L{Level up?}
@@ -186,7 +191,7 @@ flowchart TD
 | [LockedTradesAccessor](src/main/java/locked_villager_trades/LockedTradesAccessor.java) | Interface for villager locked-trades storage |
 | [LockedTradesMenuAccessor](src/main/java/locked_villager_trades/LockedTradesMenuAccessor.java) | Interface for MerchantMenu UI state |
 | [LockedTradeData](src/main/java/locked_villager_trades/util/LockedTradeData.java) | Record for per-profession data |
-| [LockedTradesStorage](src/main/java/locked_villager_trades/util/LockedTradesStorage.java) | Serialization + `copyOffers()` |
+| [LockedTradesStorage](src/main/java/locked_villager_trades/util/LockedTradesStorage.java) | Serialization + `copyOffers()` + `isDuplicateOf()` for deduplication |
 | [SelectTradeSetPayload](src/main/java/locked_villager_trades/networking/SelectTradeSetPayload.java) | C2S packet |
 | [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | Client: injects trade set selector into merchant screen |
 | [MerchantScreenRenderMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenRenderMixin.java) | Client: hides vanilla XP bar when mod manages trades |
@@ -197,6 +202,7 @@ flowchart TD
 ## 10. Extension Points for Agents
 
 - **Configuration**: Edit `config/locked_villager_trades.json` – `trade_set_count` (1–20) controls how many options uninitialized villagers offer; effective count is `min(config, profession_max)`
+- **Deduplication**: Trade sets are deduplicated per profession using structural equality (same items and counts per offer). See `LockedTradesStorage.isDuplicateOf()` and `areTradeSetsStructurallyEqual()`; extend these to customize what counts as a duplicate
 - **Custom profession caps**: Extend [ProfessionMaxHelper](src/main/java/locked_villager_trades/util/ProfessionMaxHelper.java) to add limits for mod-added professions (default fallback: 10)
 - **UI changes**: Modify [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) (layout constants, button placement) or [TradeIndexLabel](src/client/java/locked_villager_trades/client/TradeIndexLabel.java)
 - **New persistence fields**: Extend `LockedTradeData` and `LockedTradesStorage` CODEC; update `VillagerPersistMixin` if needed

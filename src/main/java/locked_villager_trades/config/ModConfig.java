@@ -17,7 +17,7 @@ public class ModConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int MIN_TRADE_SET_COUNT = 1;
     private static final int MAX_TRADE_SET_COUNT = 20;
-    private static final int DEFAULT_TRADE_SET_COUNT = 2;
+    private static final int DEFAULT_TRADE_SET_COUNT = 4;
 
     private int tradeSetCount = DEFAULT_TRADE_SET_COUNT;
 

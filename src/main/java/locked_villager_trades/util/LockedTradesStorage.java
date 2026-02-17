@@ -1,10 +1,13 @@
 package locked_villager_trades.util;
 
+import locked_villager_trades.Locked_villager_trades;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -106,5 +109,48 @@ public final class LockedTradesStorage {
      */
     public static MerchantOffers copyOffers(MerchantOffers offers) {
         return offers.copy();
+    }
+
+    /**
+     * Returns true if two MerchantOffers have the same structural content (same items and counts).
+     * Ignores uses, specialPrice, and demand.
+     */
+    public static boolean areTradeSetsStructurallyEqual(MerchantOffers a, MerchantOffers b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) {
+            if (!areOffersStructurallyEqual(a.get(i), b.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean areOffersStructurallyEqual(MerchantOffer a, MerchantOffer b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return stacksEqual(a.getBaseCostA(), b.getBaseCostA())
+                && stacksEqual(a.getCostB(), b.getCostB())
+                && stacksEqual(a.getResult(), b.getResult());
+    }
+
+    private static boolean stacksEqual(ItemStack a, ItemStack b) {
+        if (a.isEmpty() && b.isEmpty()) return true;
+        if (a.isEmpty() || b.isEmpty()) return false;
+        return ItemStack.isSameItemSameComponents(a, b);
+    }
+
+    /**
+     * Returns true if candidate is structurally equal to any set in existing.
+     */
+    public static boolean isDuplicateOf(MerchantOffers candidate, List<MerchantOffers> existing) {
+        if (candidate == null || existing == null || existing.isEmpty()) return false;
+        for (int i = 0; i < existing.size(); i++) {
+            if (areTradeSetsStructurallyEqual(candidate, existing.get(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

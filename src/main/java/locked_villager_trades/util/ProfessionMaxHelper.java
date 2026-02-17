@@ -48,7 +48,7 @@ public final class ProfessionMaxHelper {
         if (profession.equals(VillagerProfession.NONE)) {
             return 0;
         }
-        int configValue = config != null ? config.getTradeSetCount() : 2;
+        int configValue = config != null ? config.getTradeSetCount() : 4;
         ResourceKey<VillagerProfession> key = BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).orElse(null);
         int professionMax = key != null ? PROFESSION_MAX.getOrDefault(key, FALLBACK_MAX) : FALLBACK_MAX;
         if (professionMax <= 0) return 0;

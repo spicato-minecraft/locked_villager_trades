@@ -29,6 +29,9 @@ public abstract class VillagerPersistMixin implements LockedTradesAccessor {
     @Unique
     private int locked_villager_trades$generatingSetIndex = 0;
 
+    @Unique
+    private int locked_villager_trades$generatingDuplicateRetries = 0;
+
     @Override
     public Map<VillagerProfession, LockedTradeData> locked_villager_trades$getLockedTrades() {
         return locked_villager_trades$lockedTrades;
@@ -75,6 +78,16 @@ public abstract class VillagerPersistMixin implements LockedTradesAccessor {
     @Override
     public void locked_villager_trades$setGeneratingSetIndex(int value) {
         this.locked_villager_trades$generatingSetIndex = value;
+    }
+
+    @Override
+    public int locked_villager_trades$getGeneratingDuplicateRetries() {
+        return locked_villager_trades$generatingDuplicateRetries;
+    }
+
+    @Override
+    public void locked_villager_trades$setGeneratingDuplicateRetries(int value) {
+        this.locked_villager_trades$generatingDuplicateRetries = value;
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))

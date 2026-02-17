@@ -72,4 +72,14 @@ public interface LockedTradesAccessor {
      * Sets the generating set index.
      */
     void locked_villager_trades$setGeneratingSetIndex(int value);
+
+    /**
+     * Gets the duplicate retry count during trade set generation (transient, not persisted).
+     */
+    int locked_villager_trades$getGeneratingDuplicateRetries();
+
+    /**
+     * Sets the duplicate retry count during trade set generation.
+     */
+    void locked_villager_trades$setGeneratingDuplicateRetries(int value);
 }
