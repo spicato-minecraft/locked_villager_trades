@@ -51,6 +51,8 @@ public abstract class MerchantScreenMixin {
     @Inject(method = "init", at = @At("TAIL"))
     private void locked_villager_trades$resetSelectorFlag(CallbackInfo ci) {
         locked_villager_trades$selectorAdded = false;
+        locked_villager_trades$caretButtons = null;
+        locked_villager_trades$tradeIndexLabel = null;
     }
 
     @Inject(method = "render", at = @At("HEAD"))

@@ -99,6 +99,8 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 } else {
                     maxIdx = -1;
                 }
+            } else {
+                maxIdx = -1; // Unemployed: no trade sets
             }
         } else {
             // Wandering trader: use locked placeholder [0,1,0] so canSelectTradeSet stays false.
@@ -162,6 +164,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
 
     @Override
     public boolean locked_villager_trades$canSelectTradeSet() {
+        if (trader instanceof Villager v && v.getVillagerData().profession().value().equals(VillagerProfession.NONE)) {
+            return false;
+        }
         if (locked_villager_trades$placeholderData != null) {
             return locked_villager_trades$placeholderData[1] == 0
                     && locked_villager_trades$placeholderData.length > 2
