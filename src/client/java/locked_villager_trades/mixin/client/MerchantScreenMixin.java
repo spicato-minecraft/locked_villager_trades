@@ -42,54 +42,63 @@ public abstract class MerchantScreenMixin {
     @Unique
     private List<CaretButton> locked_villager_trades$caretButtons;
 
+    @Unique
+    private TradeIndexLabel locked_villager_trades$tradeIndexLabel;
+
+    @Unique
+    private boolean locked_villager_trades$selectorAdded;
+
     @Inject(method = "init", at = @At("TAIL"))
-    private void locked_villager_trades$addTradeSetSelector(CallbackInfo ci) {
-        Object self = this;
-        if (!(self instanceof MerchantScreen merchantScreen)) {
-            return;
-        }
-        if (!(merchantScreen.getMenu() instanceof LockedTradesMenuAccessor accessor)) {
-            return;
-        }
-        if (!accessor.locked_villager_trades$canSelectTradeSet()) {
-            return;
-        }
-        int x = leftPos + TRADE_SELECTOR_X;
-        int y = topPos + TRADE_SELECTOR_Y;
-
-        ScreenAccessorMixin screenAccessor = (ScreenAccessorMixin) merchantScreen;
-
-        // Layout: [<] [Trades N] [>] - carets on either side of text container
-        int leftCaretX = x;
-        int textX = leftCaretX + CARET_BUTTON_SIZE + 2;
-        int rightCaretX = textX + TEXT_CONTAINER_WIDTH + 2;
-
-        CaretButton leftCaret = new CaretButton(
-                Component.literal("<"),
-                b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() - 1),
-                leftCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
-                merchantScreen.getMenu(),
-                true
-        );
-        CaretButton rightCaret = new CaretButton(
-                Component.literal(">"),
-                b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() + 1),
-                rightCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
-                merchantScreen.getMenu(),
-                false
-        );
-        locked_villager_trades$caretButtons = new ArrayList<>();
-        locked_villager_trades$caretButtons.add(leftCaret);
-        locked_villager_trades$caretButtons.add(rightCaret);
-
-        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(leftCaret);
-        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(
-                new TradeIndexLabel(textX, y, TEXT_CONTAINER_WIDTH, CARET_BUTTON_SIZE, merchantScreen.getMenu()));
-        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(rightCaret);
+    private void locked_villager_trades$resetSelectorFlag(CallbackInfo ci) {
+        locked_villager_trades$selectorAdded = false;
     }
 
     @Inject(method = "render", at = @At("HEAD"))
     private void locked_villager_trades$updateCaretVisibility(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        Object self = this;
+        if (!(self instanceof MerchantScreen merchantScreen)) {
+            return;
+        }
+        var menu = merchantScreen.getMenu();
+        if (!(menu instanceof LockedTradesMenuAccessor accessor)) {
+            return;
+        }
+        // Add selector lazily only when canSelectTradeSet is true (after sync from server).
+        // Villagers: server syncs [0,0,N] -> canSelectTradeSet true -> we add.
+        // Wandering traders: server syncs [0,1,0] -> canSelectTradeSet false -> we never add.
+        if (!locked_villager_trades$selectorAdded && accessor.locked_villager_trades$canSelectTradeSet()
+                && accessor.locked_villager_trades$getMaxTradeSetIndex() >= 1) {
+            locked_villager_trades$selectorAdded = true;
+            int x = leftPos + TRADE_SELECTOR_X;
+            int y = topPos + TRADE_SELECTOR_Y;
+            int leftCaretX = x;
+            int textX = leftCaretX + CARET_BUTTON_SIZE + 2;
+            int rightCaretX = textX + TEXT_CONTAINER_WIDTH + 2;
+
+            CaretButton leftCaret = new CaretButton(
+                    Component.literal("<"),
+                    b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() - 1),
+                    leftCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
+                    menu,
+                    true
+            );
+            CaretButton rightCaret = new CaretButton(
+                    Component.literal(">"),
+                    b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() + 1),
+                    rightCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
+                    menu,
+                    false
+            );
+            locked_villager_trades$caretButtons = new ArrayList<>();
+            locked_villager_trades$caretButtons.add(leftCaret);
+            locked_villager_trades$caretButtons.add(rightCaret);
+            locked_villager_trades$tradeIndexLabel = new TradeIndexLabel(textX, y, TEXT_CONTAINER_WIDTH, CARET_BUTTON_SIZE, menu);
+
+            ScreenAccessorMixin screenAccessor = (ScreenAccessorMixin) merchantScreen;
+            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(leftCaret);
+            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(locked_villager_trades$tradeIndexLabel);
+            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(rightCaret);
+        }
         if (locked_villager_trades$caretButtons != null) {
             for (CaretButton caret : locked_villager_trades$caretButtons) {
                 caret.updateVisibility();

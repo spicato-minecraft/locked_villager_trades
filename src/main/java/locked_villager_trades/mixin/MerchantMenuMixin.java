@@ -85,9 +85,28 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 }
             }
         }
-        // Client or non-Villager or Villager without 2 sets: use placeholder for sync consistency
-        // Placeholder receives synced values from server (selectedIndex, locked, maxTradeSetIndex)
-        locked_villager_trades$placeholderData = new int[]{0, 0, 1}; // default maxIndex=1 until server sync
+        // Client or non-Villager or Villager without 2 sets: use placeholder for sync consistency.
+        // MUST always add 3 slots so client/server ContainerData count matches (avoids IndexOutOfBounds).
+        // For non-Villager (wandering trader): use locked placeholder so canSelectTradeSet=false.
+        int maxIdx = 1; // default for villager client/placeholder
+        int lockedVal = 0;
+        if (trader instanceof Villager villager) {
+            VillagerProfession profession = villager.getVillagerData().profession().value();
+            if (!profession.equals(VillagerProfession.NONE)) {
+                LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
+                if (data != null && data.tradeSets() != null && !data.tradeSets().isEmpty()) {
+                    maxIdx = data.tradeSets().size() - 1;
+                } else {
+                    maxIdx = -1;
+                }
+            }
+        } else {
+            // Wandering trader: use locked placeholder [0,1,0] so canSelectTradeSet stays false.
+            // Client adds selector lazily in render only when canSelectTradeSet is true, so we never add for wandering traders.
+            maxIdx = -1;
+            lockedVal = 1;
+        }
+        locked_villager_trades$placeholderData = new int[]{0, lockedVal, Math.max(0, maxIdx)};
         final int[] placeholder = locked_villager_trades$placeholderData;
         lockedTradesData = new ContainerData() {
                 @Override
@@ -144,7 +163,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
     @Override
     public boolean locked_villager_trades$canSelectTradeSet() {
         if (locked_villager_trades$placeholderData != null) {
-            return locked_villager_trades$placeholderData[1] == 0;
+            return locked_villager_trades$placeholderData[1] == 0
+                    && locked_villager_trades$placeholderData.length > 2
+                    && locked_villager_trades$placeholderData[2] >= 1;
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();

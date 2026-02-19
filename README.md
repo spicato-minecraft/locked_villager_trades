@@ -8,7 +8,7 @@ This README serves as a technical reference for agents extending the mod. It doc
 
 ## 1. Overview and Vanilla Context
 
-**What the mod does:** When a villager first acquires a profession, the mod generates N trade set options (configurable, default 2). The player chooses one via a caret UI (`< Trades N >`) before completing any trade. The number of options is capped per profession: e.g. Weaponsmiths have ~3, Librarians support many more. Once a trade is completed, that selection is locked and persists across workstation breaks/replacements and profession changes.
+**What the mod does:** When a villager first acquires a profession, the mod generates N trade set options (configurable, default 4). The player chooses one via a caret UI (`< Trades N >`) before completing any trade. The number of options is capped per profession: e.g. Weaponsmiths have ~3, Librarians support many more. Once a trade is completed, that selection is locked and persists across workstation breaks/replacements and profession changes.
 
 **Vanilla behavior (baseline):** Villagers regenerate trades on `updateTrades()` when opening the trade UI, leveling up, or after restocking. Trades are random per profession/level.
 
@@ -28,8 +28,8 @@ This README serves as a technical reference for agents extending the mod. It doc
 | `Villager.updateTrades()` | [VillagerTradesMixin](src/main/java/locked_villager_trades/mixin/VillagerTradesMixin.java) | HEAD (cancellable), TAIL | Restore locked offers instead of regenerating; on first profession, generate N sets (from config, capped by profession); on level-up, let vanilla run then update stored data |
 | `AbstractVillager.notifyTrade()` | [VillagerTradeLockMixin](src/main/java/locked_villager_trades/mixin/VillagerTradeLockMixin.java) | TAIL | Lock the current trade set and record level when player completes first trade |
 | `Villager.addAdditionalSaveData` / `readAdditionalSaveData` | [VillagerPersistMixin](src/main/java/locked_villager_trades/mixin/VillagerPersistMixin.java) | TAIL | Persist `lockedTrades` map via ValueOutput/ValueInput (1.21.10+) |
-| `MerchantMenu.<init>` | [MerchantMenuMixin](src/main/java/locked_villager_trades/mixin/MerchantMenuMixin.java) | TAIL | Add 3 `ContainerData` slots (selectedIndex, locked, maxTradeSetIndex) for client sync when villager has 2+ trade sets |
-| `AbstractContainerScreen.init` | [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | TAIL | Add trade set selector UI (`<`, label, `>`) when `canSelectTradeSet()` |
+| `MerchantMenu.<init>` | [MerchantMenuMixin](src/main/java/locked_villager_trades/mixin/MerchantMenuMixin.java) | TAIL | Add 3 `ContainerData` slots (selectedIndex, locked, maxTradeSetIndex) for client sync; uses live data for Villagers with 2+ sets, placeholder for client/non-Villager (wandering trader gets `[0,1,0]` so selector never shows) |
+| `AbstractContainerScreen.init` / `render` | [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | init TAIL, render HEAD | Reset selector flag; add trade set selector UI lazily in render when `canSelectTradeSet()` (after server sync) |
 | `MerchantScreen.renderProgressBar` | [MerchantScreenRenderMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenRenderMixin.java) | HEAD (cancellable) | Hide vanilla XP bar when mod manages trades |
 
 ---
@@ -42,8 +42,9 @@ All UI code is **client-only** and lives under `src/client/`:
 
 | Path | Role |
 |------|------|
-| [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | Injects the trade set selector (`<`, label, `>`) into the merchant screen |
+| [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | Injects the trade set selector (`<`, label, `>`) into the merchant screen; adds selector lazily in render when `canSelectTradeSet()` after server sync |
 | [MerchantScreenRenderMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenRenderMixin.java) | Hides the vanilla experience bar when the mod manages 2+ trade sets |
+| [CaretButton](src/client/java/locked_villager_trades/client/CaretButton.java) | Caret buttons that hide at boundaries (left at index 0, right at max) or when locked |
 | [TradeIndexLabel](src/client/java/locked_villager_trades/client/TradeIndexLabel.java) | Custom widget that displays the current trade set index (1-based) |
 | [ScreenAccessorMixin](src/client/java/locked_villager_trades/mixin/client/ScreenAccessorMixin.java) | Accessor to call `addRenderableWidget` (otherwise inaccessible) |
 
@@ -55,15 +56,18 @@ These mixins are registered in `locked_villager_trades.client.mixins.json` and o
 
 **Mod additions:**
 
-1. **MerchantScreenMixin** targets `AbstractContainerScreen.init` (TAIL). It runs only when:
+1. **MerchantScreenMixin** targets `AbstractContainerScreen.init` (TAIL) and `render` (HEAD). The selector is added lazily in `render` only when:
    - The screen is a `MerchantScreen`
    - The menu implements `LockedTradesMenuAccessor` (i.e. `MerchantMenu` with our mixin)
-   - `canSelectTradeSet()` is true (2+ trade sets, not yet locked)
+   - `canSelectTradeSet()` is true (2+ trade sets, not yet locked, after server sync)
+   - `getMaxTradeSetIndex() >= 1`
+
+   For wandering traders, `MerchantMenuMixin` uses a placeholder `[0,1,0]` so `canSelectTradeSet()` stays false and the selector is never shown.
 
    It adds three widgets in a row after the vanilla "Trades" label:
-   - **Left caret button** (`<`) – sends `SelectTradeSetPayload` with `index - 1`
+   - **CaretButton** (left `<`) – sends `SelectTradeSetPayload` with `index - 1`; hides when index is 0 or locked
    - **TradeIndexLabel** – shows current index (1-based), reads from `LockedTradesMenuAccessor`
-   - **Right caret button** (`>`) – sends `SelectTradeSetPayload` with `index + 1`
+   - **CaretButton** (right `>`) – sends `SelectTradeSetPayload` with `index + 1`; hides when at max index or locked
 
    Layout constants: `TRADE_SELECTOR_X = 18`, `TRADE_SELECTOR_Y = 4`, `CARET_BUTTON_SIZE = 12`, `TEXT_CONTAINER_WIDTH = 42`.
 
@@ -96,6 +100,7 @@ These expose otherwise-inaccessible methods/fields for the mod to use:
 
 - **LockedTradeData** (record): `tradeSets` (List of MerchantOffers), `selectedIndex` (0 to tradeSets.size()-1), `locked` (boolean), `lockedLevel` (int)
 - **Storage**: `Map<VillagerProfession, LockedTradeData>` on each Villager via [VillagerPersistMixin](src/main/java/locked_villager_trades/mixin/VillagerPersistMixin.java)
+- **Transient generation state** (not persisted): `generatingSetIndex`, `generatingDuplicateRetries` on Villager via [LockedTradesAccessor](src/main/java/locked_villager_trades/LockedTradesAccessor.java) – used during multi-set generation and deduplication retries
 - **Serialization**: [LockedTradesStorage](src/main/java/locked_villager_trades/util/LockedTradesStorage.java) – uses `ValueOutput`/`ValueInput` with Codec; supports legacy single-offer format
 - **ContainerData sync**: `MerchantMenuMixin` adds 3 slots: index 0 = selectedIndex, index 1 = locked (1/0), index 2 = maxTradeSetIndex. Client reads these for UI; server writes via networking
 
@@ -193,15 +198,16 @@ flowchart TD
 | [LockedTradeData](src/main/java/locked_villager_trades/util/LockedTradeData.java) | Record for per-profession data |
 | [LockedTradesStorage](src/main/java/locked_villager_trades/util/LockedTradesStorage.java) | Serialization + `copyOffers()` + `isDuplicateOf()` for deduplication |
 | [SelectTradeSetPayload](src/main/java/locked_villager_trades/networking/SelectTradeSetPayload.java) | C2S packet |
-| [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | Client: injects trade set selector into merchant screen |
+| [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) | Client: injects trade set selector into merchant screen (lazy add in render) |
 | [MerchantScreenRenderMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenRenderMixin.java) | Client: hides vanilla XP bar when mod manages trades |
+| [CaretButton](src/client/java/locked_villager_trades/client/CaretButton.java) | Client: caret buttons that hide at boundaries or when locked |
 | [TradeIndexLabel](src/client/java/locked_villager_trades/client/TradeIndexLabel.java) | Client widget for "Trades N" display |
 
 ---
 
 ## 10. Extension Points for Agents
 
-- **Configuration**: Edit `config/locked_villager_trades.json` – `trade_set_count` (1–20) controls how many options uninitialized villagers offer; effective count is `min(config, profession_max)`
+- **Configuration**: Edit `config/locked_villager_trades.json` – `trade_set_count` (1–20, default 4) controls how many options uninitialized villagers offer; effective count is `min(config, profession_max)`
 - **Deduplication**: Trade sets are deduplicated per profession using structural equality (same items and counts per offer). See `LockedTradesStorage.isDuplicateOf()` and `areTradeSetsStructurallyEqual()`; extend these to customize what counts as a duplicate
 - **Custom profession caps**: Extend [ProfessionMaxHelper](src/main/java/locked_villager_trades/util/ProfessionMaxHelper.java) to add limits for mod-added professions (default fallback: 10)
 - **UI changes**: Modify [MerchantScreenMixin](src/client/java/locked_villager_trades/mixin/client/MerchantScreenMixin.java) (layout constants, button placement) or [TradeIndexLabel](src/client/java/locked_villager_trades/client/TradeIndexLabel.java)

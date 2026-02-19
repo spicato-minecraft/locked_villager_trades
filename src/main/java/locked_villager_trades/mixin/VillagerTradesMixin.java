@@ -58,28 +58,23 @@ public abstract class VillagerTradesMixin {
         }
 
         int currentLevel = data.level();
-        boolean hasMultipleSets = tradeData.tradeSets().size() >= 2;
+        int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
 
-        if (hasMultipleSets) {
-            if (tradeData.locked()) {
-                // Level-up: let vanilla run so new level trades are added
-                if (currentLevel > tradeData.lockedLevel()) {
-                    return;
-                }
+        if (tradeData.locked()) {
+            if (currentLevel > tradeData.lockedLevel()) {
+                return; // Level-up: let vanilla run
             }
-            // Not locked yet and fewer sets than config: clear and let vanilla run so TAIL can regenerate
-            int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
-            if (!tradeData.locked() && tradeData.tradeSets().size() < N) {
-                lockedTrades.remove(profession);
-                return; // Let vanilla run, TAIL will do first-time init
-            }
-            // Restore selected trade set (use copy so restock/use don't affect stored data)
-            MerchantOffers selected = tradeData.getSelectedOffers();
-            if (selected != null && !selected.isEmpty()) {
-                MerchantOffers copy = LockedTradesStorage.copyOffers(selected);
-                self.setOffers(copy);
-                ci.cancel();
-            }
+        }
+        if (!tradeData.locked() && tradeData.tradeSets().size() < N) {
+            lockedTrades.remove(profession);
+            return; // Let vanilla run, TAIL will do first-time init
+        }
+        // Restore selected trade set (works for 1 or more sets)
+        MerchantOffers selected = tradeData.getSelectedOffers();
+        if (selected != null && !selected.isEmpty()) {
+            MerchantOffers copy = LockedTradesStorage.copyOffers(selected);
+            self.setOffers(copy);
+            ci.cancel();
         }
     }
 
