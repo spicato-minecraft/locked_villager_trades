@@ -6,7 +6,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"fabric-gametest": [
-			"locked_villager_trades.gametest.FirstProfessionTradeSetGenerationGameTest"
+			"locked_villager_trades.gametest.FirstProfessionTradeSetGenerationGameTest",
+			"locked_villager_trades.gametest.LockedTradesWorkstationBreakReplaceGameTest",
+			"locked_villager_trades.gametest.SaveLoadPreservesProfessionsGameTest",
+			"locked_villager_trades.gametest.TradeLockAfterFirstTradeGameTest",
+			"locked_villager_trades.gametest.LevelUpUpdatesStoredTradesGameTest",
+			"locked_villager_trades.gametest.SelectionBlockedAfterLockGameTest",
+			"locked_villager_trades.gametest.PreLockTradeSetCyclingGameTest"
 		]
 	},
 	"depends": {

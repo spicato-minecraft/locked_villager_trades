@@ -32,8 +32,13 @@ bin/
 
 run/
 
+# cursor
+
+.cursor/
+
 # java
 
+*.log
 hs_err_*.log
 replay_*.log
 *.hprof
