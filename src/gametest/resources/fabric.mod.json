@@ -1,0 +1,17 @@
+{
+	"schemaVersion": 1,
+	"id": "locked_villager_trades_test",
+	"version": "${version}",
+	"name": "Locked Villager Trades Game Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"locked_villager_trades.gametest.FirstProfessionTradeSetGenerationGameTest"
+		]
+	},
+	"depends": {
+		"locked_villager_trades": "*",
+		"fabric-api": "*",
+		"minecraft": "~1.21.10"
+	}
+}
