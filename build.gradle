@@ -30,6 +30,16 @@ loom {
 
 }
 
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "locked_villager_trades_test"
+		enableGameTests = true
+		enableClientGameTests = false
+		eula = true
+	}
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -42,6 +52,14 @@ dependencies {
 }
 
 processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+processGametestResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
