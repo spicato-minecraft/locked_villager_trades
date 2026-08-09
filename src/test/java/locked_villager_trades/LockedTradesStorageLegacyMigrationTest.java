@@ -6,9 +6,9 @@ import locked_villager_trades.util.LockedTradesStorage;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -29,8 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class LockedTradesStorageLegacyMigrationTest {
 
-    private static final Codec<Map<ResourceLocation, MerchantOffers>> LEGACY_CODEC =
-            Codec.unboundedMap(ResourceLocation.CODEC, MerchantOffers.CODEC);
+    private static Codec<Map<Identifier, MerchantOffers>> legacyCodec() {
+        return Codec.unboundedMap(Identifier.CODEC, MerchantOffers.CODEC);
+    }
 
     @BeforeAll
     static void bootstrapMinecraft() {
@@ -40,15 +41,15 @@ class LockedTradesStorageLegacyMigrationTest {
     @Test
     void readFrom_migratesLegacySingleOfferFormat() {
         VillagerProfession weaponsmith = BuiltInRegistries.VILLAGER_PROFESSION.getValueOrThrow(VillagerProfession.WEAPONSMITH);
-        ResourceLocation weaponsmithId = VillagerProfession.WEAPONSMITH.location();
+        Identifier weaponsmithId = VillagerProfession.WEAPONSMITH.identifier();
         MerchantOffers legacyOffers = TestMerchantOffers.sampleTradeSet(2, 1);
 
-        Map<ResourceLocation, MerchantOffers> legacyData = new HashMap<>();
+        Map<Identifier, MerchantOffers> legacyData = new HashMap<>();
         legacyData.put(weaponsmithId, legacyOffers);
 
         var lookup = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY).freeze();
         TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, lookup);
-        output.storeNullable(LockedTradesStorage.NBT_KEY, LEGACY_CODEC, legacyData);
+        output.storeNullable(LockedTradesStorage.NBT_KEY, legacyCodec(), legacyData);
         CompoundTag tag = output.buildResult();
 
         ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, lookup, tag);

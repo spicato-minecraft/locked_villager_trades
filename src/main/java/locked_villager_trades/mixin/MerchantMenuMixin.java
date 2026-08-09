@@ -4,8 +4,9 @@ import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.LockedTradesMenuAccessor;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import locked_villager_trades.util.VillagerProfessionHelper;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.Merchant;
@@ -40,7 +41,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         ContainerData lockedTradesData;
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradesAccessor accessor = (LockedTradesAccessor) villager;
                 LockedTradeData data = accessor.locked_villager_trades$getLockedTrades().get(profession);
                 if (data != null && data.tradeSets() != null && data.tradeSets().size() >= 2) {
@@ -92,7 +93,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         int lockedVal = 0;
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
                 if (data != null && data.tradeSets() != null && !data.tradeSets().isEmpty()) {
                     maxIdx = data.tradeSets().size() - 1;
@@ -138,7 +139,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
                 if (data != null) {
                     return data.selectedIndex();
@@ -155,7 +156,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 return ((LockedTradesAccessor) villager).locked_villager_trades$isTradeSetLocked(profession);
             }
         }
@@ -164,7 +165,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
 
     @Override
     public boolean locked_villager_trades$canSelectTradeSet() {
-        if (trader instanceof Villager v && v.getVillagerData().profession().value().equals(VillagerProfession.NONE)) {
+        if (trader instanceof Villager v && VillagerProfessionHelper.isNone(v.getVillagerData().profession())) {
             return false;
         }
         if (locked_villager_trades$placeholderData != null) {
@@ -174,7 +175,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
                 return data != null && data.tradeSets() != null && data.tradeSets().size() >= 2 && !data.locked();
             }
@@ -192,7 +193,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradeData data = ((LockedTradesAccessor) villager).locked_villager_trades$getLockedTrades().get(profession);
                 if (data != null && data.tradeSets() != null && !data.tradeSets().isEmpty()) {
                     return data.tradeSets().size() - 1;
@@ -206,7 +207,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
     public boolean locked_villager_trades$shouldHideExperienceBar() {
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
-            if (!profession.equals(VillagerProfession.NONE)) {
+            if (!VillagerProfessionHelper.isNone(profession)) {
                 LockedTradesAccessor accessor = (LockedTradesAccessor) villager;
                 var lockedTrades = accessor.locked_villager_trades$getLockedTrades();
                 if (lockedTrades != null) {

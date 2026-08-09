@@ -1,6 +1,7 @@
 package locked_villager_trades.mixin;
 
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -14,7 +15,7 @@ public interface VillagerAccessorMixin {
     void locked_villager_trades$invokeResendOffersToTradingPlayer();
 
     @Invoker("updateTrades")
-    void locked_villager_trades$invokeUpdateTrades();
+    void locked_villager_trades$invokeUpdateTrades(ServerLevel level);
 
     @Invoker("updateSpecialPrices")
     void locked_villager_trades$invokeUpdateSpecialPrices(Player player);

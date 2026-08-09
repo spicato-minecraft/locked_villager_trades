@@ -3,9 +3,10 @@ package locked_villager_trades;
 import locked_villager_trades.config.ModConfig;
 import locked_villager_trades.networking.SelectTradeSetPayload;
 import locked_villager_trades.util.LockedTradesStorage;
+import locked_villager_trades.util.VillagerProfessionHelper;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.fabricmc.api.ModInitializer;
@@ -36,7 +37,7 @@ public class Locked_villager_trades implements ModInitializer {
 					return;
 				}
 				var profession = villager.getVillagerData().profession().value();
-				if (profession.equals(net.minecraft.world.entity.npc.VillagerProfession.NONE)) {
+				if (VillagerProfessionHelper.isNone(profession)) {
 					return;
 				}
 				var accessor = (LockedTradesAccessor) villager;

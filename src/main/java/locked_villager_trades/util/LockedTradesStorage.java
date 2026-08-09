@@ -4,8 +4,8 @@ import locked_villager_trades.Locked_villager_trades;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -33,12 +33,12 @@ public final class LockedTradesStorage {
             Codec.INT.fieldOf("lockedLevel").forGetter(LockedTradeData::lockedLevel)
     ).apply(inst, LockedTradeData::new));
 
-    private static final Codec<Map<ResourceLocation, LockedTradeData>> CODEC =
-            Codec.unboundedMap(ResourceLocation.CODEC, LOCKED_TRADE_DATA_CODEC);
+    private static final Codec<Map<Identifier, LockedTradeData>> CODEC =
+            Codec.unboundedMap(Identifier.CODEC, LOCKED_TRADE_DATA_CODEC);
 
-    // Legacy: Map<ResourceLocation, MerchantOffers> for backward compatibility
-    private static final Codec<Map<ResourceLocation, MerchantOffers>> LEGACY_CODEC =
-            Codec.unboundedMap(ResourceLocation.CODEC, MerchantOffers.CODEC);
+    // Legacy: Map<Identifier, MerchantOffers> for backward compatibility
+    private static final Codec<Map<Identifier, MerchantOffers>> LEGACY_CODEC =
+            Codec.unboundedMap(Identifier.CODEC, MerchantOffers.CODEC);
 
     private LockedTradesStorage() {
     }
@@ -50,12 +50,12 @@ public final class LockedTradesStorage {
         if (lockedTrades == null || lockedTrades.isEmpty()) {
             return;
         }
-        Map<ResourceLocation, LockedTradeData> toStore = new HashMap<>();
+        Map<Identifier, LockedTradeData> toStore = new HashMap<>();
         for (Map.Entry<VillagerProfession, LockedTradeData> entry : lockedTrades.entrySet()) {
             toStore.put(
                     BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(entry.getKey())
                             .orElseThrow()
-                            .location(),
+                            .identifier(),
                     entry.getValue());
         }
         output.storeNullable(NBT_KEY, CODEC, toStore);
@@ -72,7 +72,7 @@ public final class LockedTradesStorage {
         // Try new format first
         try {
             input.read(NBT_KEY, CODEC).ifPresent(stored -> {
-                for (Map.Entry<ResourceLocation, LockedTradeData> entry : stored.entrySet()) {
+                for (Map.Entry<Identifier, LockedTradeData> entry : stored.entrySet()) {
                     VillagerProfession profession = BuiltInRegistries.VILLAGER_PROFESSION.getOptional(entry.getKey()).orElse(null);
                     if (profession != null) {
                         result.put(profession, entry.getValue());
@@ -87,7 +87,7 @@ public final class LockedTradesStorage {
         if (result.isEmpty()) {
             try {
                 input.read(NBT_KEY_LEGACY, LEGACY_CODEC).ifPresent(stored -> {
-                    for (Map.Entry<ResourceLocation, MerchantOffers> entry : stored.entrySet()) {
+                    for (Map.Entry<Identifier, MerchantOffers> entry : stored.entrySet()) {
                         VillagerProfession profession = BuiltInRegistries.VILLAGER_PROFESSION.getOptional(entry.getKey()).orElse(null);
                         if (profession != null && entry.getValue() != null && !entry.getValue().isEmpty()) {
                             List<MerchantOffers> tradeSets = new ArrayList<>();

@@ -12,8 +12,9 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Blocks;
 
@@ -50,7 +51,7 @@ public class FirstProfessionTradeSetGenerationGameTest {
         villager.setVillagerData(villager.getVillagerData()
                 .withProfession(villager.registryAccess(), VillagerProfession.LIBRARIAN)
                 .withLevel(1));
-        ((VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateTrades();
+        ((VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateTrades((ServerLevel) villager.level());
 
         int expectedSets = ProfessionMaxHelper.getMaxTradeSets(
                 librarianProfession,

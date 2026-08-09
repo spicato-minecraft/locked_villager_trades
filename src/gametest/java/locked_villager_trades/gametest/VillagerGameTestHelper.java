@@ -19,8 +19,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Block;
@@ -82,7 +83,7 @@ public final class VillagerGameTestHelper {
     }
 
     public static void triggerUpdateTrades(Villager villager) {
-        ((VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateTrades();
+        ((VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateTrades((ServerLevel) villager.level());
     }
 
     public static void waitForTradeGeneration(

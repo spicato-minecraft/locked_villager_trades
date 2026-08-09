@@ -18,6 +18,6 @@
 	"depends": {
 		"locked_villager_trades": "*",
 		"fabric-api": "*",
-		"minecraft": "~1.21.10"
+		"minecraft": "~1.21.11"
 	}
 }

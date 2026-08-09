@@ -5,10 +5,12 @@ import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
 import locked_villager_trades.util.ProfessionMaxHelper;
+import locked_villager_trades.util.VillagerProfessionHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.entity.npc.VillagerData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerData;
 import net.minecraft.world.item.trading.MerchantOffers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,13 +33,13 @@ public abstract class VillagerTradesMixin {
     private static final int MAX_DEDUP_RETRIES = 50;
 
     @Inject(method = "updateTrades", at = @At("HEAD"), cancellable = true)
-    private void locked_villager_trades$onUpdateTrades(CallbackInfo ci) {
+    private void locked_villager_trades$onUpdateTrades(ServerLevel level, CallbackInfo ci) {
         Villager self = (Villager) (Object) this;
         VillagerData data = self.getVillagerData();
         VillagerProfession profession = data.profession().value();
 
         // Skip unemployed villagers
-        if (profession.equals(VillagerProfession.NONE)) {
+        if (VillagerProfessionHelper.isNone(profession)) {
             return;
         }
 
@@ -79,13 +81,13 @@ public abstract class VillagerTradesMixin {
     }
 
     @Inject(method = "updateTrades", at = @At("TAIL"))
-    private void locked_villager_trades$saveTradesAfterUpdate(CallbackInfo ci) {
+    private void locked_villager_trades$saveTradesAfterUpdate(ServerLevel level, CallbackInfo ci) {
         Villager self = (Villager) (Object) this;
         VillagerData data = self.getVillagerData();
         VillagerProfession profession = data.profession().value();
 
         // Skip unemployed villagers
-        if (profession.equals(VillagerProfession.NONE)) {
+        if (VillagerProfessionHelper.isNone(profession)) {
             return;
         }
 
@@ -105,7 +107,7 @@ public abstract class VillagerTradesMixin {
             if (existingData != null && existingData.tradeSets().size() == generatingIndex && currentOffers != null && !currentOffers.isEmpty()) {
                 int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
                 List<MerchantOffers> allSets = new ArrayList<>(existingData.tradeSets());
-                String profName = BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.location().toString()).orElse("unknown");
+                String profName = BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.identifier().toString()).orElse("unknown");
 
                 Locked_villager_trades.LOGGER.debug("[LVT] Mid-gen TAIL: profession={} generatingIndex={} existingSets={} N={} currentOffers.size={}",
                         profName, generatingIndex, existingData.tradeSets().size(), N, currentOffers.size());
@@ -128,7 +130,7 @@ public abstract class VillagerTradesMixin {
                     } else {
                         accessor.locked_villager_trades$setGeneratingDuplicateRetries(retries + 1);
                         self.setOffers(new MerchantOffers());
-                        ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
+                        ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades((ServerLevel) self.level());
                         return;
                     }
                 } else {
@@ -152,11 +154,11 @@ public abstract class VillagerTradesMixin {
                     lockedTrades.put(profession, new LockedTradeData(allSets, 0, false, 0));
                     accessor.locked_villager_trades$setGeneratingSetIndex(allSets.size());
                     self.setOffers(new MerchantOffers());
-                    ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
+                    ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades((ServerLevel) self.level());
                 }
             } else {
                 Locked_villager_trades.LOGGER.debug("[LVT] Mid-gen TAIL skip: profession={} generatingIndex={} existingData={} existingSize={} currentOffersEmpty={}",
-                        BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.location().toString()).orElse("unknown"), generatingIndex,
+                        BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.identifier().toString()).orElse("unknown"), generatingIndex,
                         existingData != null, existingData != null ? existingData.tradeSets().size() : -1,
                         currentOffers == null || currentOffers.isEmpty());
             }
@@ -182,7 +184,7 @@ public abstract class VillagerTradesMixin {
         }
 
         int N = ProfessionMaxHelper.getMaxTradeSets(profession, Locked_villager_trades.CONFIG);
-        String profName = BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.location().toString()).orElse("unknown");
+        String profName = BuiltInRegistries.VILLAGER_PROFESSION.getResourceKey(profession).map(k -> k.identifier().toString()).orElse("unknown");
         Locked_villager_trades.LOGGER.info("[LVT] First-time trade generation: profession={} N={} firstSetOffers={}",
                 profName, N, currentOffers.size());
 
@@ -200,6 +202,6 @@ public abstract class VillagerTradesMixin {
         accessor.locked_villager_trades$setGeneratingSetIndex(1);
         accessor.locked_villager_trades$setGeneratingDuplicateRetries(0);
         self.setOffers(new MerchantOffers());
-        ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades();
+        ((VillagerAccessorMixin) self).locked_villager_trades$invokeUpdateTrades((ServerLevel) self.level());
     }
 }

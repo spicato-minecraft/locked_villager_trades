@@ -3,7 +3,7 @@ package locked_villager_trades;
 import locked_villager_trades.config.ModConfig;
 import locked_villager_trades.util.ProfessionMaxHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

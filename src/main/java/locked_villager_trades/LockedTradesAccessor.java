@@ -1,7 +1,7 @@
 package locked_villager_trades;
 
 import locked_villager_trades.util.LockedTradeData;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffers;
 
 import java.util.List;

@@ -2,10 +2,11 @@ package locked_villager_trades.mixin;
 
 import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.util.LockedTradeData;
-import net.minecraft.world.entity.npc.AbstractVillager;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerData;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import locked_villager_trades.util.VillagerProfessionHelper;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerData;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,7 +31,7 @@ public abstract class VillagerTradeLockMixin {
 
         VillagerData data = villager.getVillagerData();
         VillagerProfession profession = data.profession().value();
-        if (profession.equals(VillagerProfession.NONE)) {
+        if (VillagerProfessionHelper.isNone(profession)) {
             return;
         }
 

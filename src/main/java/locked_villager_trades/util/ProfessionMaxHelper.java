@@ -3,7 +3,9 @@ package locked_villager_trades.util;
 import locked_villager_trades.config.ModConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
+
+import locked_villager_trades.util.VillagerProfessionHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +47,7 @@ public final class ProfessionMaxHelper {
      * Uses min(config.trade_set_count, profession_max). For NITWIT returns 0.
      */
     public static int getMaxTradeSets(VillagerProfession profession, ModConfig config) {
-        if (profession.equals(VillagerProfession.NONE)) {
+        if (VillagerProfessionHelper.isNone(profession)) {
             return 0;
         }
         int configValue = config != null ? config.getTradeSetCount() : 4;
