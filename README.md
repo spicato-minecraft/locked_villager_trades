@@ -221,3 +221,18 @@ flowchart TD
 
 - Minecraft 1.21.10, Fabric API, Java 21
 - Mixins: `locked_villager_trades.mixins.json` (common), `locked_villager_trades.client.mixins.json` (client-only)
+
+## 12. Branch Policy
+
+Each supported Minecraft version has its own long-lived branch named after the exact `minecraft_version` in `gradle.properties` (e.g. `1.21.10`). Version branches are the source of truth; `main` is not used.
+
+- **Default branch:** latest supported version (`1.21.10`)
+- **Feature/fix work:** branch from the target version as `{version}/feature-name`, merge back into the version branch
+- **New MC version:** create `{version}` from the prior version branch, bump `gradle.properties`, push to origin
+- **Retiring a version:** tag the final release, then archive the branch (do not delete)
+
+```bash
+git clone https://github.com/spicato-spicato/locked_villager_trades.git
+cd locked_villager_trades
+git checkout 1.21.10
+```
