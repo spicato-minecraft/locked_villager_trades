@@ -12,11 +12,20 @@ import net.minecraft.world.inventory.MerchantMenu;
  */
 public class TradeIndexLabel extends AbstractWidget {
 
+    /** Same ARGB label color as vanilla merchant screen text ({@code -12566464}). */
+    private static final int LABEL_COLOR = 0xFF404040;
+
     private final MerchantMenu menu;
 
     public TradeIndexLabel(int x, int y, int width, int height, MerchantMenu menu) {
         super(x, y, width, height, Component.empty());
         this.menu = menu;
+    }
+
+    public void renderOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        if (this.visible) {
+            this.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
     }
 
     @Override
@@ -33,7 +42,7 @@ public class TradeIndexLabel extends AbstractWidget {
                 String.valueOf(index),
                 getX() + getWidth() / 2,
                 getY() + (getHeight() - 8) / 2,
-                0x404040
+                LABEL_COLOR
         );
     }
 

@@ -5,13 +5,17 @@ import java.util.List;
 
 import locked_villager_trades.LockedTradesMenuAccessor;
 import locked_villager_trades.client.CaretButton;
+import locked_villager_trades.client.SelectorWidgetHolder;
 import locked_villager_trades.client.TradeIndexLabel;
+import locked_villager_trades.client.TradeSetSyncClientState;
+import locked_villager_trades.networking.RequestTradeSetSyncPayload;
 import locked_villager_trades.networking.SelectTradeSetPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.MerchantMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -20,18 +24,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Adds trade set selector with caret interface ("Trades <N>") to the merchant screen
+ * Adds trade set selector with caret interface ("Trades &lt;N&gt;") to the merchant screen
  * when the villager has 2+ trade set options and is not yet locked.
- * Targets AbstractContainerScreen so we can shadow leftPos/topPos (defined in parent).
  */
 @Mixin(AbstractContainerScreen.class)
 public abstract class MerchantScreenMixin {
 
-    /** X offset: after vanilla "Trades" label (7 chars ~42px) + gap */
     private static final int TRADE_SELECTOR_X = 18;
     private static final int TRADE_SELECTOR_Y = 4;
     private static final int CARET_BUTTON_SIZE = 12;
-    /** Width for index number between carets */
     private static final int TEXT_CONTAINER_WIDTH = 42;
 
     @Shadow
@@ -48,59 +49,56 @@ public abstract class MerchantScreenMixin {
     @Unique
     private boolean locked_villager_trades$selectorAdded;
 
+    @Unique
+    private int locked_villager_trades$syncRetryTicks;
+
     @Inject(method = "init", at = @At("TAIL"))
-    private void locked_villager_trades$resetSelectorFlag(CallbackInfo ci) {
+    private void locked_villager_trades$onInit(CallbackInfo ci) {
         locked_villager_trades$selectorAdded = false;
         locked_villager_trades$caretButtons = null;
         locked_villager_trades$tradeIndexLabel = null;
+        SelectorWidgetHolder.clear();
+
+        if (!((Object) this instanceof MerchantScreen merchantScreen)) {
+            return;
+        }
+        locked_villager_trades$syncRetryTicks = 0;
+        locked_villager_trades$sendSyncRequest();
+        TradeSetSyncClientState.applyPending(merchantScreen.getMenu());
+        locked_villager_trades$refreshSelector(merchantScreen);
+    }
+
+    @Inject(method = "removed", at = @At("HEAD"))
+    private void locked_villager_trades$onRemoved(CallbackInfo ci) {
+        if ((Object) this instanceof MerchantScreen) {
+            TradeSetSyncClientState.clear();
+            SelectorWidgetHolder.clear();
+        }
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void locked_villager_trades$onTick(CallbackInfo ci) {
+        if (!((Object) this instanceof MerchantScreen merchantScreen)) {
+            return;
+        }
+        MerchantMenu menu = merchantScreen.getMenu();
+        TradeSetSyncClientState.applyPending(menu);
+        if (!TradeSetSyncClientState.canShowSelector(menu)) {
+            locked_villager_trades$syncRetryTicks++;
+            if (locked_villager_trades$syncRetryTicks % 10 == 0) {
+                locked_villager_trades$sendSyncRequest();
+            }
+            return;
+        }
+        locked_villager_trades$refreshSelector(merchantScreen);
     }
 
     @Inject(method = "render", at = @At("HEAD"))
     private void locked_villager_trades$updateCaretVisibility(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        Object self = this;
-        if (!(self instanceof MerchantScreen merchantScreen)) {
+        if (!((Object) this instanceof MerchantScreen merchantScreen)) {
             return;
         }
-        var menu = merchantScreen.getMenu();
-        if (!(menu instanceof LockedTradesMenuAccessor accessor)) {
-            return;
-        }
-        // Add selector lazily only when canSelectTradeSet is true (after sync from server).
-        // Villagers: server syncs [0,0,N] -> canSelectTradeSet true -> we add.
-        // Wandering traders: server syncs [0,1,0] -> canSelectTradeSet false -> we never add.
-        if (!locked_villager_trades$selectorAdded && accessor.locked_villager_trades$canSelectTradeSet()
-                && accessor.locked_villager_trades$getMaxTradeSetIndex() >= 1) {
-            locked_villager_trades$selectorAdded = true;
-            int x = leftPos + TRADE_SELECTOR_X;
-            int y = topPos + TRADE_SELECTOR_Y;
-            int leftCaretX = x;
-            int textX = leftCaretX + CARET_BUTTON_SIZE + 2;
-            int rightCaretX = textX + TEXT_CONTAINER_WIDTH + 2;
-
-            CaretButton leftCaret = new CaretButton(
-                    Component.literal("<"),
-                    b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() - 1),
-                    leftCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
-                    menu,
-                    true
-            );
-            CaretButton rightCaret = new CaretButton(
-                    Component.literal(">"),
-                    b -> sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() + 1),
-                    rightCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
-                    menu,
-                    false
-            );
-            locked_villager_trades$caretButtons = new ArrayList<>();
-            locked_villager_trades$caretButtons.add(leftCaret);
-            locked_villager_trades$caretButtons.add(rightCaret);
-            locked_villager_trades$tradeIndexLabel = new TradeIndexLabel(textX, y, TEXT_CONTAINER_WIDTH, CARET_BUTTON_SIZE, menu);
-
-            ScreenAccessorMixin screenAccessor = (ScreenAccessorMixin) merchantScreen;
-            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(leftCaret);
-            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(locked_villager_trades$tradeIndexLabel);
-            screenAccessor.locked_villager_trades$invokeAddRenderableWidget(rightCaret);
-        }
+        locked_villager_trades$refreshSelector(merchantScreen);
         if (locked_villager_trades$caretButtons != null) {
             for (CaretButton caret : locked_villager_trades$caretButtons) {
                 caret.updateVisibility();
@@ -108,9 +106,68 @@ public abstract class MerchantScreenMixin {
         }
     }
 
-    private static void sendTradeSet(LockedTradesMenuAccessor accessor, int index) {
+    @Unique
+    private void locked_villager_trades$refreshSelector(MerchantScreen merchantScreen) {
+        MerchantMenu menu = merchantScreen.getMenu();
+        if (TradeSetSyncClientState.applyPending(menu)) {
+            locked_villager_trades$selectorAdded = false;
+        }
+        locked_villager_trades$tryAddSelector(merchantScreen);
+    }
+
+    @Unique
+    private void locked_villager_trades$tryAddSelector(MerchantScreen merchantScreen) {
+        MerchantMenu menu = merchantScreen.getMenu();
+        if (!(menu instanceof LockedTradesMenuAccessor accessor)) {
+            return;
+        }
+        if (locked_villager_trades$selectorAdded || !TradeSetSyncClientState.canShowSelector(menu)) {
+            return;
+        }
+        locked_villager_trades$selectorAdded = true;
+        int x = leftPos + TRADE_SELECTOR_X;
+        int y = topPos + TRADE_SELECTOR_Y;
+        int leftCaretX = x;
+        int textX = leftCaretX + CARET_BUTTON_SIZE + 2;
+        int rightCaretX = textX + TEXT_CONTAINER_WIDTH + 2;
+
+        CaretButton leftCaret = new CaretButton(
+                Component.literal("<"),
+                b -> locked_villager_trades$sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() - 1),
+                leftCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
+                menu,
+                true
+        );
+        CaretButton rightCaret = new CaretButton(
+                Component.literal(">"),
+                b -> locked_villager_trades$sendTradeSet(accessor, accessor.locked_villager_trades$getSelectedTradeSetIndex() + 1),
+                rightCaretX, y, CARET_BUTTON_SIZE, CARET_BUTTON_SIZE,
+                menu,
+                false
+        );
+        locked_villager_trades$caretButtons = new ArrayList<>();
+        locked_villager_trades$caretButtons.add(leftCaret);
+        locked_villager_trades$caretButtons.add(rightCaret);
+        locked_villager_trades$tradeIndexLabel = new TradeIndexLabel(textX, y, TEXT_CONTAINER_WIDTH, CARET_BUTTON_SIZE, menu);
+
+        ScreenAccessorMixin screenAccessor = (ScreenAccessorMixin) merchantScreen;
+        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(leftCaret);
+        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(locked_villager_trades$tradeIndexLabel);
+        screenAccessor.locked_villager_trades$invokeAddRenderableWidget(rightCaret);
+        SelectorWidgetHolder.set(locked_villager_trades$caretButtons, locked_villager_trades$tradeIndexLabel);
+    }
+
+    @Unique
+    private static void locked_villager_trades$sendTradeSet(LockedTradesMenuAccessor accessor, int index) {
         int maxIndex = accessor.locked_villager_trades$getMaxTradeSetIndex();
         int clamped = maxIndex >= 0 ? Math.max(0, Math.min(index, maxIndex)) : Math.max(0, index);
         ClientPlayNetworking.send(new SelectTradeSetPayload(clamped));
+    }
+
+    @Unique
+    private void locked_villager_trades$sendSyncRequest() {
+        if (ClientPlayNetworking.canSend(RequestTradeSetSyncPayload.TYPE)) {
+            ClientPlayNetworking.send(RequestTradeSetSyncPayload.INSTANCE);
+        }
     }
 }

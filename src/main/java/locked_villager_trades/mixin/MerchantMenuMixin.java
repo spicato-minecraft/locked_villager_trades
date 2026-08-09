@@ -2,9 +2,12 @@ package locked_villager_trades.mixin;
 
 import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.LockedTradesMenuAccessor;
+import locked_villager_trades.networking.TradeSetSyncHelper;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
 import locked_villager_trades.util.VillagerProfessionHelper;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.npc.ClientSideMerchant;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.inventory.ContainerData;
@@ -82,6 +85,7 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 }
             };
                     ((locked_villager_trades.mixin.AbstractContainerMenuAccessorMixin) this).locked_villager_trades$invokeAddDataSlots(lockedTradesData);
+                    locked_villager_trades$scheduleTradeSetSync();
                     return;
                 }
             }
@@ -103,9 +107,12 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
             } else {
                 maxIdx = -1; // Unemployed: no trade sets
             }
+        } else if (trader instanceof ClientSideMerchant) {
+            // Client villager menus always use ClientSideMerchant; wait for TradeSetSyncPayload from server.
+            maxIdx = -1;
+            lockedVal = 0;
         } else {
-            // Wandering trader: use locked placeholder [0,1,0] so canSelectTradeSet stays false.
-            // Client adds selector lazily in render only when canSelectTradeSet is true, so we never add for wandering traders.
+            // Wandering trader (server): use locked placeholder [0,1,0] so canSelectTradeSet stays false.
             maxIdx = -1;
             lockedVal = 1;
         }
@@ -130,6 +137,27 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 }
             };
         ((locked_villager_trades.mixin.AbstractContainerMenuAccessorMixin) this).locked_villager_trades$invokeAddDataSlots(lockedTradesData);
+        locked_villager_trades$scheduleTradeSetSync();
+    }
+
+    @Unique
+    private void locked_villager_trades$scheduleTradeSetSync() {
+        if (!(trader instanceof Villager villager) || villager.level().isClientSide()) {
+            return;
+        }
+        var player = villager.getTradingPlayer();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        var server = serverPlayer.level().getServer();
+        if (server == null) {
+            return;
+        }
+        server.execute(() -> {
+            if (serverPlayer.containerMenu == (Object) this && trader instanceof Villager syncedVillager) {
+                TradeSetSyncHelper.sendToPlayer(serverPlayer, syncedVillager);
+            }
+        });
     }
 
     @Override
@@ -205,6 +233,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
 
     @Override
     public boolean locked_villager_trades$shouldHideExperienceBar() {
+        if (locked_villager_trades$placeholderData != null && locked_villager_trades$placeholderData.length > 2) {
+            return locked_villager_trades$placeholderData[2] >= 1;
+        }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
             if (!VillagerProfessionHelper.isNone(profession)) {
@@ -217,5 +248,15 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
             }
         }
         return false;
+    }
+
+    @Override
+    public void locked_villager_trades$applySyncedState(int selectedIndex, boolean locked, int maxTradeSetIndex) {
+        if (locked_villager_trades$placeholderData == null) {
+            locked_villager_trades$placeholderData = new int[CONTAINER_DATA_SLOTS];
+        }
+        locked_villager_trades$placeholderData[0] = Math.max(0, selectedIndex);
+        locked_villager_trades$placeholderData[1] = locked ? 1 : 0;
+        locked_villager_trades$placeholderData[2] = Math.max(0, maxTradeSetIndex);
     }
 }

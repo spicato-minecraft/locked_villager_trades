@@ -1,7 +1,10 @@
 package locked_villager_trades;
 
 import locked_villager_trades.config.ModConfig;
+import locked_villager_trades.networking.RequestTradeSetSyncPayload;
 import locked_villager_trades.networking.SelectTradeSetPayload;
+import locked_villager_trades.networking.TradeSetSyncHelper;
+import locked_villager_trades.networking.TradeSetSyncPayload;
 import locked_villager_trades.util.LockedTradesStorage;
 import locked_villager_trades.util.VillagerProfessionHelper;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -25,6 +28,26 @@ public class Locked_villager_trades implements ModInitializer {
 		CONFIG = ModConfig.load();
 
 		PayloadTypeRegistry.playC2S().register(SelectTradeSetPayload.TYPE, SelectTradeSetPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestTradeSetSyncPayload.TYPE, RequestTradeSetSyncPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(TradeSetSyncPayload.TYPE, TradeSetSyncPayload.CODEC);
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestTradeSetSyncPayload.TYPE, (payload, context) -> {
+			context.server().execute(() -> {
+				var player = context.player();
+				if (!(player.containerMenu instanceof MerchantMenu menu)) {
+					LOGGER.debug("[LVT] Ignoring trade set sync request: player menu is not MerchantMenu");
+					return;
+				}
+				var trader = ((locked_villager_trades.mixin.MerchantMenuAccessorMixin) menu).locked_villager_trades$getTrader();
+				if (!(trader instanceof Villager villager)) {
+					LOGGER.debug("[LVT] Ignoring trade set sync request: trader is not Villager");
+					return;
+				}
+				TradeSetSyncHelper.sendToPlayer(player, villager);
+				menu.sendAllDataToRemote();
+				menu.broadcastFullState();
+			});
+		});
 
 		ServerPlayNetworking.registerGlobalReceiver(SelectTradeSetPayload.TYPE, (payload, context) -> {
 			context.server().execute(() -> {
@@ -55,6 +78,7 @@ public class Locked_villager_trades implements ModInitializer {
 					((locked_villager_trades.mixin.VillagerAccessorMixin) villager).locked_villager_trades$invokeResendOffersToTradingPlayer();
 				}
 				menu.broadcastFullState();
+				TradeSetSyncHelper.sendToPlayer(player, villager);
 			});
 		});
 

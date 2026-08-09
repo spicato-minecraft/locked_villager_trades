@@ -32,4 +32,9 @@ public interface LockedTradesMenuAccessor {
      * Returns -1 if not applicable.
      */
     int locked_villager_trades$getMaxTradeSetIndex();
+
+    /**
+     * Applies server-synced trade set selector state on the client menu.
+     */
+    void locked_villager_trades$applySyncedState(int selectedIndex, boolean locked, int maxTradeSetIndex);
 }

@@ -14,6 +14,10 @@ import net.minecraft.world.inventory.MerchantMenu;
  */
 public class CaretButton extends Button {
 
+    /** Same ARGB label color as vanilla merchant screen text ({@code -12566464}). */
+    private static final int LABEL_COLOR = 0xFF404040;
+    private static final int DISABLED_COLOR = 0xFFA0A0A0;
+
     private final MerchantMenu menu;
     private final boolean isLeft;
 
@@ -29,6 +33,12 @@ public class CaretButton extends Button {
         this.isLeft = isLeft;
     }
 
+    public void renderOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        if (this.visible) {
+            this.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+    }
+
     @Override
     protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.drawCenteredString(
@@ -36,7 +46,7 @@ public class CaretButton extends Button {
                 getMessage(),
                 getX() + getWidth() / 2,
                 getY() + (getHeight() - 8) / 2,
-                active ? 0xFFFFFF : 0xA0A0A0
+                this.active ? LABEL_COLOR : DISABLED_COLOR
         );
     }
 

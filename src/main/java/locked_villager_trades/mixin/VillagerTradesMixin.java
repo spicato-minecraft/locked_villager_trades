@@ -2,6 +2,7 @@ package locked_villager_trades.mixin;
 
 import locked_villager_trades.Locked_villager_trades;
 import locked_villager_trades.LockedTradesAccessor;
+import locked_villager_trades.networking.TradeSetSyncHelper;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
 import locked_villager_trades.util.ProfessionMaxHelper;
@@ -126,6 +127,7 @@ public abstract class VillagerTradesMixin {
                         self.setOffers(LockedTradesStorage.copyOffers(newData.getSelectedOffers()));
                         accessor.locked_villager_trades$setGeneratingSetIndex(0);
                         accessor.locked_villager_trades$setGeneratingDuplicateRetries(0);
+                        TradeSetSyncHelper.sendToTradingPlayerIfOpen(self);
                         return;
                     } else {
                         accessor.locked_villager_trades$setGeneratingDuplicateRetries(retries + 1);
@@ -147,6 +149,7 @@ public abstract class VillagerTradesMixin {
                     self.setOffers(LockedTradesStorage.copyOffers(newData.getSelectedOffers()));
                     accessor.locked_villager_trades$setGeneratingSetIndex(0);
                     accessor.locked_villager_trades$setGeneratingDuplicateRetries(0);
+                    TradeSetSyncHelper.sendToTradingPlayerIfOpen(self);
                 } else {
                     // Continue: store progress, generate next set
                     Locked_villager_trades.LOGGER.debug("[LVT] Continuing generation: profession={} allSets.size={} next generatingIndex={}",
