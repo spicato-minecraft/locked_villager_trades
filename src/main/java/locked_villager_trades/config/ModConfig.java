@@ -47,6 +47,12 @@ public class ModConfig {
             config.save();
         }
 
+        Locked_villager_trades.LOGGER.info(
+                "Loaded config from {}: trade_set_count={} (selector requires >= 2 sets and an unlocked villager)",
+                configPath.toAbsolutePath(),
+                config.getTradeSetCount()
+        );
+
         return config;
     }
 

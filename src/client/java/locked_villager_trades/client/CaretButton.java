@@ -1,7 +1,6 @@
 package locked_villager_trades.client;
 
 import locked_villager_trades.LockedTradesMenuAccessor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -29,15 +28,16 @@ public class CaretButton extends Button {
         this.isLeft = isLeft;
     }
 
+    public void renderOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        if (this.visible) {
+            this.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+    }
+
     @Override
     protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        guiGraphics.drawCenteredString(
-                Minecraft.getInstance().font,
-                getMessage(),
-                getX() + getWidth() / 2,
-                getY() + (getHeight() - 8) / 2,
-                active ? 0xFFFFFF : 0xA0A0A0
-        );
+        this.renderDefaultSprite(guiGraphics);
+        this.renderDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
     }
 
     /**
