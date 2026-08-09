@@ -8,26 +8,19 @@ import java.util.List;
 public final class SelectorWidgetHolder {
 
     private static List<CaretButton> caretButtons;
-    private static TradeIndexLabel tradeIndexLabel;
 
     private SelectorWidgetHolder() {
     }
 
-    public static void set(List<CaretButton> carets, TradeIndexLabel indexLabel) {
+    public static void set(List<CaretButton> carets) {
         caretButtons = carets;
-        tradeIndexLabel = indexLabel;
     }
 
     public static List<CaretButton> caretButtons() {
         return caretButtons;
     }
 
-    public static TradeIndexLabel tradeIndexLabel() {
-        return tradeIndexLabel;
-    }
-
     public static void clear() {
         caretButtons = null;
-        tradeIndexLabel = null;
     }
 }

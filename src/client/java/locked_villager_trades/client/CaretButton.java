@@ -1,7 +1,6 @@
 package locked_villager_trades.client;
 
 import locked_villager_trades.LockedTradesMenuAccessor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -13,10 +12,6 @@ import net.minecraft.world.inventory.MerchantMenu;
  * or when the trade set is locked (player completed a trade).
  */
 public class CaretButton extends Button {
-
-    /** Same ARGB label color as vanilla merchant screen text ({@code -12566464}). */
-    private static final int LABEL_COLOR = 0xFF404040;
-    private static final int DISABLED_COLOR = 0xFFA0A0A0;
 
     private final MerchantMenu menu;
     private final boolean isLeft;
@@ -41,13 +36,8 @@ public class CaretButton extends Button {
 
     @Override
     protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        guiGraphics.drawCenteredString(
-                Minecraft.getInstance().font,
-                getMessage(),
-                getX() + getWidth() / 2,
-                getY() + (getHeight() - 8) / 2,
-                this.active ? LABEL_COLOR : DISABLED_COLOR
-        );
+        this.renderDefaultSprite(guiGraphics);
+        this.renderDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
     }
 
     /**

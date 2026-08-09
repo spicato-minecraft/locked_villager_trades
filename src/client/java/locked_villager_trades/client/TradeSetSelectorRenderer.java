@@ -17,8 +17,7 @@ public final class TradeSetSelectorRenderer {
         }
 
         var caretButtons = SelectorWidgetHolder.caretButtons();
-        var indexLabel = SelectorWidgetHolder.tradeIndexLabel();
-        if (caretButtons == null || indexLabel == null) {
+        if (caretButtons == null) {
             return;
         }
 
@@ -30,6 +29,5 @@ public final class TradeSetSelectorRenderer {
         for (CaretButton caret : caretButtons) {
             caret.renderOverlay(guiGraphics, mouseX, mouseY, partialTick);
         }
-        indexLabel.renderOverlay(guiGraphics, mouseX, mouseY, partialTick);
     }
 }
