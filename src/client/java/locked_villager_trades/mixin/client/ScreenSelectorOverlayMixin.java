@@ -1,7 +1,7 @@
 package locked_villager_trades.mixin.client;
 
 import locked_villager_trades.client.TradeSetSelectorRenderer;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,10 +16,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Screen.class)
 public abstract class ScreenSelectorOverlayMixin {
 
-    @Inject(method = "renderWithTooltipAndSubtitles", at = @At("TAIL"))
-    private void locked_villager_trades$renderTradeSetSelectorOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    @Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("TAIL"))
+    private void locked_villager_trades$renderTradeSetSelectorOverlay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if ((Object) this instanceof MerchantScreen merchantScreen) {
-            TradeSetSelectorRenderer.renderOverlay(merchantScreen, guiGraphics, mouseX, mouseY, partialTick);
+            TradeSetSelectorRenderer.renderOverlay(merchantScreen, graphics, mouseX, mouseY, partialTick);
         }
     }
 }

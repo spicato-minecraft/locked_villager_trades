@@ -10,7 +10,7 @@ import locked_villager_trades.client.TradeSetSyncClientState;
 import locked_villager_trades.networking.RequestTradeSetSyncPayload;
 import locked_villager_trades.networking.SelectTradeSetPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.network.chat.Component;
@@ -89,8 +89,8 @@ public abstract class MerchantScreenMixin {
         locked_villager_trades$refreshSelector(merchantScreen);
     }
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void locked_villager_trades$updateCaretVisibility(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void locked_villager_trades$updateCaretVisibility(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (!((Object) this instanceof MerchantScreen merchantScreen)) {
             return;
         }

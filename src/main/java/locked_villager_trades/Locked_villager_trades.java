@@ -27,9 +27,9 @@ public class Locked_villager_trades implements ModInitializer {
 	public void onInitialize() {
 		CONFIG = ModConfig.load();
 
-		PayloadTypeRegistry.playC2S().register(SelectTradeSetPayload.TYPE, SelectTradeSetPayload.CODEC);
-		PayloadTypeRegistry.playC2S().register(RequestTradeSetSyncPayload.TYPE, RequestTradeSetSyncPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(TradeSetSyncPayload.TYPE, TradeSetSyncPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(SelectTradeSetPayload.TYPE, SelectTradeSetPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(RequestTradeSetSyncPayload.TYPE, RequestTradeSetSyncPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(TradeSetSyncPayload.TYPE, TradeSetSyncPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(RequestTradeSetSyncPayload.TYPE, (payload, context) -> {
 			context.server().execute(() -> {

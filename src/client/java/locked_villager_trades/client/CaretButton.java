@@ -1,8 +1,7 @@
 package locked_villager_trades.client;
 
 import locked_villager_trades.LockedTradesMenuAccessor;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MerchantMenu;
@@ -23,21 +22,21 @@ public class CaretButton extends Button {
             MerchantMenu menu,
             boolean isLeft
     ) {
-        super(x, y, width, height, message, onPress, supplier -> AbstractWidget.wrapDefaultNarrationMessage(supplier.get()));
+        super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
         this.menu = menu;
         this.isLeft = isLeft;
     }
 
-    public void renderOverlay(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void renderOverlay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (this.visible) {
-            this.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.extractRenderState(graphics, mouseX, mouseY, partialTick);
         }
     }
 
     @Override
-    protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderDefaultSprite(guiGraphics);
-        this.renderDefaultLabel(guiGraphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
+    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        this.extractDefaultSprite(graphics);
+        this.extractDefaultLabel(graphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
     }
 
     /**

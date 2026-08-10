@@ -10,6 +10,7 @@ import java.util.Optional;
 
 /**
  * Helpers for building {@link MerchantOffers} in unit tests.
+ * Requires {@link MinecraftTestBootstrap#init()} before use.
  */
 final class TestMerchantOffers {
 

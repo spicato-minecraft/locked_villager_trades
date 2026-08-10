@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Adds synced data slots for trade set selection (selectedIndex, tradeSetLocked)
@@ -158,6 +159,13 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 TradeSetSyncHelper.sendToPlayer(serverPlayer, syncedVillager);
             }
         });
+    }
+
+    @Inject(method = "showProgressBar", at = @At("HEAD"), cancellable = true)
+    private void locked_villager_trades$hideProgressBarWhenModManages(CallbackInfoReturnable<Boolean> cir) {
+        if (locked_villager_trades$shouldHideExperienceBar()) {
+            cir.setReturnValue(false);
+        }
     }
 
     @Override

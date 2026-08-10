@@ -1,6 +1,6 @@
 package locked_villager_trades.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 
 /**
@@ -11,7 +11,7 @@ public final class TradeSetSelectorRenderer {
     private TradeSetSelectorRenderer() {
     }
 
-    public static void renderOverlay(MerchantScreen screen, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public static void renderOverlay(MerchantScreen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (!TradeSetSyncClientState.canShowSelector(screen.getMenu())) {
             return;
         }
@@ -25,9 +25,9 @@ public final class TradeSetSelectorRenderer {
             caret.updateVisibility();
         }
 
-        guiGraphics.nextStratum();
+        graphics.nextStratum();
         for (CaretButton caret : caretButtons) {
-            caret.renderOverlay(guiGraphics, mouseX, mouseY, partialTick);
+            caret.renderOverlay(graphics, mouseX, mouseY, partialTick);
         }
     }
 }
