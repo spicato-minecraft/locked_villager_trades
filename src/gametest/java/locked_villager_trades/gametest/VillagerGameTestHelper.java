@@ -18,7 +18,7 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
@@ -56,7 +56,7 @@ public final class VillagerGameTestHelper {
     }
 
     public static Villager spawnUnemployedVillager(GameTestHelper context, int x, int y, int z) {
-        Villager villager = (Villager) context.spawn(EntityType.VILLAGER, x, y, z);
+        Villager villager = (Villager) context.spawn(EntityTypes.VILLAGER, x, y, z);
         villager.setVillagerData(villager.getVillagerData()
                 .withProfession(villager.registryAccess(), VillagerProfession.NONE)
                 .withLevel(1));

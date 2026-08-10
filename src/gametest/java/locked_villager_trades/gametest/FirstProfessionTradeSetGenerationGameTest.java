@@ -11,7 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
@@ -41,7 +41,7 @@ public class FirstProfessionTradeSetGenerationGameTest {
             }
         }
 
-        Villager villager = (Villager) context.spawn(EntityType.VILLAGER, 1, 1, 1);
+        Villager villager = (Villager) context.spawn(EntityTypes.VILLAGER, 1, 1, 1);
         villager.setVillagerData(villager.getVillagerData()
                 .withProfession(villager.registryAccess(), VillagerProfession.NONE)
                 .withLevel(1));

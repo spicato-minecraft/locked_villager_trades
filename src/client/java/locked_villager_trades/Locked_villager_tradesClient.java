@@ -12,7 +12,7 @@ public class Locked_villager_tradesClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(TradeSetSyncPayload.TYPE, (payload, context) -> {
 			context.client().execute(() -> {
 				TradeSetSyncClientState.receive(payload);
-				if (context.client().screen instanceof MerchantScreen merchantScreen) {
+				if (context.client().gui.screen() instanceof MerchantScreen merchantScreen) {
 					TradeSetSyncClientState.applyPending(merchantScreen.getMenu());
 				} else if (context.client().player != null) {
 					TradeSetSyncClientState.applyPending(context.client().player.containerMenu);
