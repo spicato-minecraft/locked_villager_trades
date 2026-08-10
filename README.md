@@ -243,21 +243,21 @@ Merging code does **not** publish to Modrinth. Publishing happens only when a Gi
 
 ### Version tags
 
-Release tags use `{minecraft_version}-{mod_version}` (e.g. `1.21.10-1.0.3`), matching `gradle.properties`.
+Release tags use `{minecraft_version}-{mod_version}` (e.g. `1.21.11-1.0.4`), matching `gradle.properties`.
 
 ### How to publish
 
-1. Merge your changes into the version branch (e.g. `1.21.10`).
+1. Merge your changes into the version branch (e.g. `1.21.11`).
 2. Bump `mod_version` in `gradle.properties` if shipping new player-facing changes.
 3. Add a changelog at `releases/{tag}.md` — user-facing bullets in plain language (see `releases/TEMPLATE.md`).
 4. Create a GitHub Release with tag `{minecraft_version}-{mod_version}` targeting the version branch.
 5. CI runs `publish.yml`: validates tag + changelog, runs `./gradlew build`, uploads to Modrinth.
 
 ```bash
-gh release create 1.21.10-1.0.3 \
-  --target 1.21.10 \
-  --title "1.21.10-1.0.3" \
-  --notes-file releases/1.21.10-1.0.3.md
+gh release create 1.21.11-1.0.4 \
+  --target 1.21.11 \
+  --title "1.21.11-1.0.4" \
+  --notes-file releases/1.21.11-1.0.4.md
 ```
 
 Infra-only merges (tests, CI, docs) never need a release unless you intend to ship a new mod version.
