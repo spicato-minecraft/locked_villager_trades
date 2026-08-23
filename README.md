@@ -71,7 +71,7 @@ These mixins are registered in `locked_villager_trades.client.mixins.json` and o
 
    Layout constants: `TRADE_SELECTOR_X = 18`, `TRADE_SELECTOR_Y = 4`, `CARET_BUTTON_SIZE = 12`, `TEXT_CONTAINER_WIDTH = 42`.
 
-2. **MerchantScreenRenderMixin** targets `MerchantScreen.renderProgressBar` (HEAD, cancellable). When `shouldHideExperienceBar()` is true (villager has 2+ trade sets), it cancels the vanilla XP bar render so the selector area is not cluttered.
+2. **MerchantMenuMixin.showProgressBar** returns false only while 2+ sets are still selectable. After the first trade the villager is locked to one set and the vanilla XP bar is shown again.
 
 3. **TradeIndexLabel** extends `AbstractWidget`. It holds a reference to `MerchantMenu` and reads `getSelectedTradeSetIndex()` from `LockedTradesMenuAccessor` each frame in `renderWidget`. The index is synced from server via `ContainerData` (see §5).
 
