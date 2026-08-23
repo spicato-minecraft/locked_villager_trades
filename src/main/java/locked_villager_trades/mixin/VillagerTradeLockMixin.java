@@ -1,6 +1,7 @@
 package locked_villager_trades.mixin;
 
 import locked_villager_trades.LockedTradesAccessor;
+import locked_villager_trades.networking.TradeSetSyncHelper;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.VillagerProfessionHelper;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
@@ -49,6 +50,7 @@ public abstract class VillagerTradeLockMixin {
         if (tradeData.tradeSets() != null && tradeData.tradeSets().size() >= 2) {
             accessor.locked_villager_trades$setTradeSetLocked(profession, true);
             accessor.locked_villager_trades$setLockedLevel(profession, data.level());
+            TradeSetSyncHelper.sendToTradingPlayerIfOpen(villager);
         }
     }
 }

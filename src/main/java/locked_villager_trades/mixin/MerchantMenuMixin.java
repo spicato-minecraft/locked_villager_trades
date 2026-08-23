@@ -3,6 +3,7 @@ package locked_villager_trades.mixin;
 import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.LockedTradesMenuAccessor;
 import locked_villager_trades.networking.TradeSetSyncHelper;
+import locked_villager_trades.util.ExperienceBarVisibility;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
 import locked_villager_trades.util.VillagerProfessionHelper;
@@ -234,7 +235,11 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
     @Override
     public boolean locked_villager_trades$shouldHideExperienceBar() {
         if (locked_villager_trades$placeholderData != null && locked_villager_trades$placeholderData.length > 2) {
-            return locked_villager_trades$placeholderData[2] >= 1;
+            boolean locked = locked_villager_trades$placeholderData[1] != 0;
+            return ExperienceBarVisibility.shouldHideFromSyncedMaxIndex(
+                    locked_villager_trades$placeholderData[2],
+                    locked
+            );
         }
         if (trader instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().profession().value();
@@ -243,7 +248,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 var lockedTrades = accessor.locked_villager_trades$getLockedTrades();
                 if (lockedTrades != null) {
                     LockedTradeData data = lockedTrades.get(profession);
-                    return data != null && data.tradeSets() != null && data.tradeSets().size() >= 2;
+                    int setCount = data != null && data.tradeSets() != null ? data.tradeSets().size() : 0;
+                    boolean locked = data != null && data.locked();
+                    return ExperienceBarVisibility.shouldHide(setCount, locked);
                 }
             }
         }
