@@ -2,6 +2,7 @@ package locked_villager_trades.mixin;
 
 import locked_villager_trades.LockedTradesAccessor;
 import locked_villager_trades.LockedTradesMenuAccessor;
+import locked_villager_trades.util.ExperienceBarVisibility;
 import locked_villager_trades.util.LockedTradeData;
 import locked_villager_trades.util.LockedTradesStorage;
 import net.minecraft.world.entity.npc.Villager;
@@ -211,7 +212,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                 var lockedTrades = accessor.locked_villager_trades$getLockedTrades();
                 if (lockedTrades != null) {
                     LockedTradeData data = lockedTrades.get(profession);
-                    return data != null && data.tradeSets() != null && data.tradeSets().size() >= 2;
+                    int setCount = data != null && data.tradeSets() != null ? data.tradeSets().size() : 0;
+                    boolean locked = data != null && data.locked();
+                    return ExperienceBarVisibility.shouldHide(setCount, locked);
                 }
             }
         }
