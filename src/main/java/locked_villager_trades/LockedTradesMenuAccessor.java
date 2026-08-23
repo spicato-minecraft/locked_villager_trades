@@ -22,8 +22,9 @@ public interface LockedTradesMenuAccessor {
     boolean locked_villager_trades$canSelectTradeSet();
 
     /**
-     * Returns true when the vanilla experience bar and level slots should be hidden
-     * (villager has 2+ trade sets managed by this mod).
+     * Returns true when the vanilla experience bar should be hidden: 2+ trade sets
+     * and the player can still pick among them. After the first trade the set is
+     * locked to one, so the bar is shown again.
      */
     boolean locked_villager_trades$shouldHideExperienceBar();
 
