@@ -11,9 +11,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Villager.class)
 public interface VillagerAccessorMixin {
 
-    @Invoker("resendOffersToTradingPlayer")
-    void locked_villager_trades$invokeResendOffersToTradingPlayer();
-
     @Invoker("updateTrades")
     void locked_villager_trades$invokeUpdateTrades(ServerLevel level);
 

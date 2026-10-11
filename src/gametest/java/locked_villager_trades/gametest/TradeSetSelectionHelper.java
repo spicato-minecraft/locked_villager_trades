@@ -38,7 +38,6 @@ public final class TradeSetSelectionHelper {
             var tradingPlayer = villager.getTradingPlayer();
             if (tradingPlayer != null) {
                 ((VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateSpecialPrices(tradingPlayer);
-                ((VillagerAccessorMixin) villager).locked_villager_trades$invokeResendOffersToTradingPlayer();
             }
         }
         return true;

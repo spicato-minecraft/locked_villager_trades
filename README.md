@@ -1,6 +1,6 @@
 # Locked Villager Trades
 
-A Fabric mod for Minecraft 26.2 that locks villager trades to the first trade set that appears for each profession. Break and replace workstations or switch professions—trades stay the same.
+A Fabric mod for Minecraft 26.3 that locks villager trades to the first trade set that appears for each profession. Break and replace workstations or switch professions—trades stay the same.
 
 This README serves as a technical reference for agents extending the mod. It documents the architecture, vanilla interception points, data flow, and extension points.
 
@@ -91,7 +91,7 @@ These expose otherwise-inaccessible methods/fields for the mod to use:
 
 - **MerchantMenuAccessorMixin** – `trader` field on `MerchantMenu`
 - **AbstractContainerMenuAccessorMixin** – `addDataSlots(ContainerData)` on `AbstractContainerMenu`
-- **VillagerAccessorMixin** – invokers: `resendOffersToTradingPlayer()`, `updateTrades()`, `updateSpecialPrices(Player)`
+- **VillagerAccessorMixin** – invokers: `updateTrades()`, `updateSpecialPrices(Player)` (26.3 sends the merchant-offers packet from `updateSpecialPrices`)
 - **ScreenAccessorMixin** – invoker: `addRenderableWidget(T)`
 
 ---
@@ -146,13 +146,13 @@ sequenceDiagram
     MerchantScreen->>SelectTradeSetPayload: send(setIndex)
     SelectTradeSetPayload->>Server: C2S packet
     Server->>MerchantMenu: get trader
-    Server->>Villager: setSelectedTradeSetIndex, setOffers, updateSpecialPrices, resendOffers
+    Server->>Villager: setSelectedTradeSetIndex, setOffers, updateSpecialPrices
     Server->>MerchantMenu: broadcastFullState
 ```
 
 - **Payload**: [SelectTradeSetPayload](src/main/java/locked_villager_trades/networking/SelectTradeSetPayload.java) – single `int setIndex` (0 to N-1)
 - **Registration**: `PayloadTypeRegistry.playC2S().register()` in main mod init
-- **Server handler**: Validates `MerchantMenu` + Villager + profession + 2+ sets + not locked; updates villager, resends offers, broadcasts menu state
+- **Server handler**: Validates `MerchantMenu` + Villager + profession + 2+ sets + not locked; updates villager, applies special prices (which sends the offers packet on 26.3), broadcasts menu state
 
 ---
 
@@ -219,14 +219,14 @@ flowchart TD
 
 ## 11. Environment and Versions
 
-- Minecraft 26.2, Fabric API, Java 25
+- Minecraft 26.3, Fabric API, Java 25
 - Mixins: `locked_villager_trades.mixins.json` (common), `locked_villager_trades.client.mixins.json` (client-only)
 
 ## 12. Branch Policy
 
 Each supported Minecraft version has its own long-lived branch named after the exact `minecraft_version` in `gradle.properties` (e.g. `1.21.10`). Version branches are the source of truth; `main` is not used.
 
-- **Default branch:** latest supported version (`26.2`)
+- **Default branch:** latest supported version (`26.3`)
 - **Feature/fix work:** branch from the target version as `{version}/feature-name`, merge back into the version branch
 - **New MC version:** create `{version}` from the prior version branch, bump `gradle.properties`, push to origin
 - **Retiring a version:** tag the final release, then archive the branch (do not delete)
@@ -234,7 +234,7 @@ Each supported Minecraft version has its own long-lived branch named after the e
 ```bash
 git clone https://github.com/spicato-spicato/locked_villager_trades.git
 cd locked_villager_trades
-git checkout 26.2
+git checkout 26.3
 ```
 
 ## 13. Releases and Modrinth

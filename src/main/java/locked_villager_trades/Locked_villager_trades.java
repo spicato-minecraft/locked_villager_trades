@@ -74,8 +74,8 @@ public class Locked_villager_trades implements ModInitializer {
 				MerchantOffers selected = accessor.locked_villager_trades$getLockedTrades().get(profession).getSelectedOffers();
 				if (selected != null && !selected.isEmpty()) {
 					villager.setOffers(LockedTradesStorage.copyOffers(selected));
+					// 26.3 folds the old resendOffersToTradingPlayer send into updateSpecialPrices.
 					((locked_villager_trades.mixin.VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateSpecialPrices(player);
-					((locked_villager_trades.mixin.VillagerAccessorMixin) villager).locked_villager_trades$invokeResendOffersToTradingPlayer();
 				}
 				menu.broadcastFullState();
 				TradeSetSyncHelper.sendToPlayer(player, villager);

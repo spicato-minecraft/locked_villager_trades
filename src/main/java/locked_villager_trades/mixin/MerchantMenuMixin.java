@@ -71,9 +71,9 @@ public abstract class MerchantMenuMixin implements LockedTradesMenuAccessor {
                             villager.setOffers(LockedTradesStorage.copyOffers(selected));
                             var tradingPlayer = villager.getTradingPlayer();
                             if (tradingPlayer != null) {
+                                // 26.3 updateSpecialPrices also sends the merchant-offers packet.
                                 ((locked_villager_trades.mixin.VillagerAccessorMixin) villager).locked_villager_trades$invokeUpdateSpecialPrices(tradingPlayer);
                             }
-                            ((locked_villager_trades.mixin.VillagerAccessorMixin) villager).locked_villager_trades$invokeResendOffersToTradingPlayer();
                         }
                     } else if (index == 1) {
                         accessor.locked_villager_trades$setTradeSetLocked(profession, value != 0);
